@@ -6,6 +6,8 @@ import { test, expect } from '@playwright/test';
  * يُشغَّل على مشروعَي المتصفح: سطح المكتب والموبايل.
  */
 
+const PROTECTED = '/pages/shared/app-shell.html';
+
 const PAGES = [
   { path: '/index.html', title: /مِنهاج/ },
   { path: '/pages/health.html', title: /صحة النظام/ },
@@ -96,4 +98,78 @@ test('لا أسرار ولا مفاتيح في أي ملف يُخدم للمتص
     expect(body, `${file} يحتوي sb_secret_`).not.toMatch(/sb_secret_[A-Za-z0-9]/);
     expect(body, `${file} يحتوي JWT حقيقيًا`).not.toMatch(/eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9]/);
   }
+});
+
+/* ---------------------------------------------------------------------------
+ * H-01/H-02 (تقرير الفحص PHASE_01_CHECK): يجب أن توجد صفحة محمية فعلية،
+ * وأن يرفض الحارس الزائر، وأن يُبنى هيكل الدور بعد اجتياز الحارس.
+ * ------------------------------------------------------------------------- */
+
+test.describe('الحارس المحمي وهيكل الدور', () => {
+  test('الصفحة المحمية تحمل data-requires-auth وتُرفض بلا جلسة', async ({ request, page }) => {
+    const raw = await request.get(PROTECTED);
+    expect(raw.status()).toBe(200);
+    expect(await raw.text()).toContain('data-requires-auth="true"');
+
+    const response = await page.goto(PROTECTED);
+    expect(response?.status()).toBe(200);
+    await page.waitForURL(/pages\/auth\/login\.html\?next=/);
+    expect(page.url()).toContain('reason=unconfigured');
+    const notice = page.locator('[data-login-notice]');
+    await expect(notice).toBeVisible();
+    await expect(notice).toContainText('لم تُهيَّأ');
+  });
+
+  test('لا يُبنى شريط جانبي لزائر بلا جلسة', async ({ page }) => {
+    await page.goto(PROTECTED);
+    await page.waitForURL(/login\.html/);
+    await expect(page.locator('.app-sidebar')).toHaveCount(0);
+  });
+
+  test('بعد اجتياز الحارس: الشريط الجانبي والحالة الفارغة يظهران', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__MINHAJ_ENV__ = {
+        supabaseUrl: 'https://e2estub0000000000000.supabase.co',
+        publishableKey: 'sb_publishable_e2e_stub_key',
+      };
+      // المكتبة الحقيقية تُحمَّل من الصفحة لاحقًا وتكتب على window.supabase؛
+      // لهذا نثبّت البديل بخاصية بلا مُعيِّن حتى لا يُستبدل.
+      const stub = {
+        createClient: () => ({
+          auth: {
+            getSession: async () => ({
+              data: { session: { access_token: 'e2e-stub', user: { id: 'e2e-stub' } } },
+              error: null,
+            }),
+          },
+        }),
+      };
+      Object.defineProperty(window, 'supabase', {
+        configurable: true,
+        get: () => stub,
+        set: () => {},
+      });
+    });
+    const errors = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    const response = await page.goto(PROTECTED);
+    expect(response?.status()).toBe(200);
+    expect(page.url()).toContain('/pages/shared/app-shell.html');
+    await expect(page.locator('.app-sidebar')).toHaveCount(1);
+    await expect(page.locator('.app-sidebar__title')).toContainText('مساحة العمل');
+    await expect(page.locator('.app-sidebar .app-nav__link')).toHaveCount(1);
+    await expect(page.locator('.empty-state__title')).toContainText('لا بيانات بعد');
+    await expect(page.locator('body')).toHaveAttribute('data-role-label', /مساحة العمل/);
+    expect(errors).toEqual([]);
+  });
+
+  test('إعداد غير صالح يظهر تنبيهًا مرئيًا (showToast مستخدم فعلًا)', async ({ page }) => {
+    await page.addInitScript(() => {
+      window.__MINHAJ_ENV__ = { supabaseUrl: 'http://not-https.example', publishableKey: 'plain-text' };
+    });
+    await page.goto('/index.html');
+    const toast = page.locator('[data-toast-container] .toast');
+    await expect(toast.first()).toBeVisible();
+    await expect(toast.first()).toContainText('إعداد Supabase غير صالح');
+  });
 });

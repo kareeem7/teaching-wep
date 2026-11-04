@@ -8,6 +8,8 @@ import { getSupabaseStatus } from './supabase-client.js';
 import { guardPage } from './auth-guard.js';
 import { renderNavbar } from './components/navbar.js';
 import { renderSidebar } from './components/sidebar.js';
+import { renderEmptyState } from './components/empty-state.js';
+import { showToast } from './components/toast.js';
 import { setStatus, announce, qsa } from './ui.js';
 
 /** نسخة الواجهة كما هي في package.json (مكررة نصًا في وسوم meta). */
@@ -132,6 +134,24 @@ export async function bootstrap() {
 
   hydrateConfigStatus(doc);
   renderHealth(doc);
+
+  // حالة فارغة صريحة بدل مساحة بيضاء توهم بوجود بيانات
+  qsa('[data-empty-host]', doc).forEach((host) => {
+    if (host.dataset.filled === 'true') return;
+    host.append(renderEmptyState({
+      title: 'لا بيانات بعد',
+      text: 'هذا تخطيط فارغ. الطلاب والمجموعات والحضور تبدأ في المرحلتين ٠٤ و٠٥.',
+      icon: '◇',
+    }));
+    host.dataset.filled = 'true';
+  });
+
+  // تحذير مرئي عند إعداد غير صالح (وليس عند مجرد كونه غير مهيأ)
+  const runtimeConfig = getConfig();
+  if (runtimeConfig.errors.length > 0) {
+    showToast('إعداد Supabase غير صالح — راجع صفحة صحة النظام.', { tone: 'danger', delay: 8000 });
+  }
+
 
   const yearTarget = doc.querySelector('[data-current-year]');
   if (yearTarget) yearTarget.textContent = String(new Date().getFullYear());

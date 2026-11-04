@@ -1,0 +1,44 @@
+== نسخة نظيفة من HEAD ==
+1890d8d391e577ad12e45cb49ee29053bc550ae7
+77
+
+== npm ci ==
+exit=0 (174 حزمة)
+
+== eslint ==
+eslint exit=0
+
+== stylelint ==
+stylelint exit=0
+
+== htmlhint ==
+
+Scanned 7 files, no errors found (16 ms).
+
+== unit ==
+# tests 25
+# pass 25
+# fail 0
+
+== e2e list ==
+Total: 36 tests in 1 file
+
+== صفحات محمية ==
+public/assets/js/auth-guard.js
+public/pages/shared/app-shell.html
+role-label:
+public/pages/shared/app-shell.html
+
+== استدعاءات فعلية ==
+public/assets/js/app.js:127:    renderSidebar({
+public/assets/js/app.js:141:    host.append(renderEmptyState({
+public/assets/js/app.js:152:    showToast('إعداد Supabase غير صالح — راجع صفحة صحة النظام.', { tone: 'danger', delay: 8000 });
+
+== أسرار ==
+لا شيء
+
+== ملفات ممنوعة متتبعة ==
+لا شيء
+
+== مهاجرة مطبقة؟ ==
+لا — لا CLI ولا Docker (L-27)

@@ -11,7 +11,7 @@
 - migrations بأسماء رقمية وصفية ثابتة مثل `0018_exam_attempts.sql`. لا تعديل migration منشور سابق؛ أضف migration جديدًا.
 - اختبارات SQL/RLS في `tests/sql/`، اختبارات الوحدة في `tests/unit/`، اختبارات المتصفح في `tests/e2e/`، والحمل في `scripts/load/`.
 - تقارير المراحل ثابتة: `docs/PHASE_REPORTS/PHASE_XX_BUILD.md` و`PHASE_XX_CHECK.md`.
-- **تحديث المرحلة ٠١ (D-311، D-312):** أُضيفت `assets/vendor/supabase/` لأصول الطرف الثالث المحلية، وأُضيف `supabase/migrations/0001b_platform_meta.sql` و`tests/unit/dom.test.js`. الأسباب موثقة في `docs/DECISIONS.md`، والأسماء الأصلية لم تتغيّر.
+- **تحديث المرحلة ٠١:** أُضيفت `public/assets/vendor/supabase/` (مكتبة العميل محليًا: `supabase.umd.js`) و`public/pages/shared/app-shell.html` و`tests/unit/dom-shell.test.js`. الأسباب في `docs/DECISIONS.md` (R-21، R-23، R-24). **تصحيح (L-02 بالفحص):** نسخة سابقة من هذا السطر ذكرت `supabase/migrations/0001b_platform_meta.sql` و`tests/unit/dom.test.js` وهما لم يُنشآ قط — حُذف ذكرهما لأن الشجرة لا تحتوي أسماء وهمية.
 - في التقرير لا أسماء وهمية: كل ملف في شجرة تقرير البناء يجب أن يكون موجودًا فعلًا في الريبو.
 - لا تضع أسرارًا أو `service_role` key تحت `public/`. المتصفح يستخدم publishable/anon key فقط، والصلاحيات تُفرض عبر RLS وEdge Functions.
 
@@ -80,14 +80,16 @@ public/index.html
 public/pages/health.html
 public/pages/auth/login.html          # صفحة دخول شكلية حتى المرحلة ٠٢
 public/pages/errors/403.html , 404.html , 500.html
+public/pages/shared/app-shell.html    # تخطيط محمي فارغ (إصلاح H-01/H-02، R-23)
 public/assets/css/app.css
 public/assets/vendor/bootstrap/bootstrap.rtl.min.css , bootstrap.bundle.min.js
+public/assets/vendor/supabase/supabase.umd.js
 public/assets/js/config.js , supabase-client.js , app.js , auth-guard.js , ui.js
 public/assets/js/components/navbar.js , sidebar.js , toast.js , empty-state.js
 supabase/config.toml
 supabase/migrations/0001_extensions.sql
 supabase/seed.sql
-tests/unit/config.test.js
+tests/unit/config.test.js , dom-shell.test.js
 tests/e2e/smoke.spec.js
 .github/workflows/ci.yml , .github/pull_request_template.md
 docs/PHASE_REPORTS/PHASE_01_BUILD.md , PHASE_01_CHECK.md
@@ -287,6 +289,8 @@ docs/PHASE_REPORTS/PHASE_12_BUILD.md , PHASE_12_CHECK.md
 | التاريخ | التعديل | السبب | المرجع |
 |---|---|---|---|
 | 2026-11-04 | إضافة `public/pages/teacher/dashboard.html` و`public/assets/js/teacher/dashboard.js` إلى المرحلة ٠٤ | المهمة ٥ من برومبت المرحلة ٠٠ تطلب نموذج شاشة المدرس، ولم تكن الصفحة في أي مرحلة | G-04 في `docs/PROJECT_STATE.md` |
+| 2026-11-04 | إضافة `public/pages/shared/app-shell.html` إلى المرحلة ٠١ | تقرير الفحص `PHASE_01_CHECK` سجّل **H-01** (لا صفحة تحمل `data-requires-auth` فالحارس خامل) و**H-02** (لا هيكل دور). الصفحة تخطيط محمي فارغ بلا بيانات ولا أزرار وهمية، وتُستبدل بصفحات الأدوار في المرحلتين ٠٣–٠٤ | عيبان HIGH في `docs/PHASE_REPORTS/PHASE_01_CHECK.md` · R-23 |
+| 2026-11-04 | إضافة `tests/unit/dom-shell.test.js` واعتماد `jsdom` كاعتماد تطوير | تنزيل متصفحات Playwright محجوب في بيئة الفحص، فبقيت حالات e2e بلا دليل محلي؛ اختبارات DOM تقرأ ملف الصفحة الحقيقي وتغطي الحارس والشريط الجانبي والحالة الفارغة والتنبيه | M-02 في `docs/PHASE_REPORTS/PHASE_01_CHECK.md` · R-24 |
 
 لم تُحذف أو تُعدَّل أي أسماء أخرى. لا تنظيم موازٍ، ولا ملفات فارغة.
 
