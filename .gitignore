@@ -24,3 +24,6 @@ Thumbs.db
 
 # تقرير Playwright المولَّد (يُعاد إنشاؤه في CI)
 docs/test-artifacts/playwright-report.json
+
+# لقطات الاختبار المولَّدة
+docs/test-artifacts/screenshots/

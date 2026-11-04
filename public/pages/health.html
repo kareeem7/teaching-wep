@@ -74,6 +74,7 @@
     </footer>
   </div>
 
+  <script src="../assets/vendor/bootstrap/bootstrap.bundle.min.js" defer></script>
   <script type="module">
     import '../assets/js/app.js';
     import { checkConnectivity } from '../assets/js/supabase-client.js';
@@ -116,7 +117,23 @@
     window.addEventListener('online', paint);
     window.addEventListener('offline', paint);
     button.addEventListener('click', runCheck);
-    document.addEventListener('minhaj:ready', runCheck, { once: true });
+
+    // تشغيل الفحص التلقائي: وحدات ES تُنفَّذ قبل DOMContentLoaded، فقد يكون
+    // app.js أطلق minhaj:ready قبل تسجيل هذا المستمع. لذا نفحص حالة الجاهزية
+    // أولًا، ونُبقي حدث load كشبكة أمان، مع حارس يمنع التشغيل المزدوج.
+    let started = false;
+    const startCheck = () => {
+      if (started) return;
+      started = true;
+      runCheck();
+    };
+
+    if (document.documentElement.dataset.appReady === 'true') {
+      startCheck();
+    } else {
+      document.addEventListener('minhaj:ready', startCheck, { once: true });
+      window.addEventListener('load', startCheck, { once: true });
+    }
   </script>
 </body>
 </html>

@@ -44,6 +44,31 @@ test.describe('الصفحة الرئيسية', () => {
   });
 });
 
+test.describe('التنقل بين الصفحات', () => {
+  test('قائمة الموبايل تُفتح بالزر وينتقل الرابط', async ({ page, isMobile }) => {
+    test.skip(!isMobile, 'خاص بمقاس الموبايل');
+    await page.goto('/index.html');
+    const toggler = page.locator('.navbar-toggler');
+    await expect(toggler).toBeVisible();
+
+    const menu = page.locator('#appNav');
+    await expect(menu).not.toHaveClass(/show/);
+    await toggler.click();
+    await expect(menu).toHaveClass(/show/);
+
+    await page.locator('#appNav a[data-nav="health"]').click();
+    await expect(page).toHaveURL(/pages\/health\.html/);
+  });
+
+  test('روابط التنقل ظاهرة مباشرة على سطح المكتب', async ({ page, isMobile }) => {
+    test.skip(isMobile === true, 'خاص بسطح المكتب');
+    await page.goto('/index.html');
+    await expect(page.locator('.navbar-toggler')).toBeHidden();
+    await expect(page.locator('.app-navbar .nav-link')).toHaveCount(3);
+    await expect(page.locator('.app-navbar .nav-link').first()).toBeVisible();
+  });
+});
+
 test.describe('حالة النظام', () => {
   test('تُنفّذ فحصًا حقيقيًا وتنتهي بحالة نهائية', async ({ page }) => {
     await page.goto('/pages/health.html');
@@ -52,6 +77,15 @@ test.describe('حالة النظام', () => {
     await expect(pill).toHaveText(/الخدمة (متاحة|غير متاحة)|فشل الفحص/);
     await expect(page.locator('#conn-latency')).toHaveText(/^\d+$|^—$/);
     await expect(page.locator('#online-pill')).toHaveText(/متصل بالشبكة|غير متصل/);
+  });
+
+  test('الفحص يبدأ تلقائيًا بلا أي تفاعل من المستخدم', async ({ page }) => {
+    // الحالة الابتدائية في HTML هي «لم يُنفَّذ بعد». إن بقي المؤشر عليها،
+    // فمعناه أن الفحص التلقائي لم يعمل (عيب D1 في تقرير الفحص).
+    await page.goto('/pages/health.html');
+    await expect(page.locator('#conn-pill')).not.toHaveText('لم يُنفَّذ بعد', { timeout: 20_000 });
+    await expect(page.locator('#conn-detail')).not.toHaveText('جارٍ التنفيذ…', { timeout: 20_000 });
+    await expect(page.locator('#conn-latency')).not.toHaveText('—', { timeout: 20_000 });
   });
 });
 
@@ -92,6 +126,26 @@ test.describe('صفحات الأخطاء', () => {
       await expect(page.locator('.error-code')).toHaveText(code);
       await expect(page.locator('h1')).toHaveText(title);
       await expect(page.getByRole('link', { name: 'الصفحة الرئيسية' })).toBeVisible();
+    });
+  }
+});
+
+test.describe('لقطات مرجعية', () => {
+  // تُنتَج داخل CI حيث يتوفر متصفح حقيقي، وتُرفع كـ artifact للاعتماد.
+  const pages = [
+    ['index', '/index.html'],
+    ['health', '/pages/health.html'],
+    ['login', '/pages/auth/login.html']
+  ];
+  for (const [name, path] of pages) {
+    test(`لقطة ${name}`, async ({ page, isMobile }) => {
+      const size = isMobile ? 'mobile' : 'desktop';
+      await page.goto(path);
+      await page.waitForLoadState('networkidle');
+      await page.screenshot({
+        path: `docs/test-artifacts/screenshots/${name}-${size}.png`,
+        fullPage: true
+      });
     });
   }
 });

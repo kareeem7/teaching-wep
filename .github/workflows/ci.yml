@@ -52,8 +52,8 @@ jobs:
         env:
           CI: 'true'
 
-      - name: حفظ artefacts عند الفشل
-        if: failure()
+      - name: حفظ artefacts واللقطات
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: playwright-artifacts
@@ -61,5 +61,6 @@ jobs:
             playwright-report/
             test-results/
             docs/test-artifacts/playwright-report.json
+            docs/test-artifacts/screenshots/
           retention-days: 7
           if-no-files-found: ignore
