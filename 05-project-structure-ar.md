@@ -11,7 +11,7 @@
 - migrations بأسماء رقمية وصفية ثابتة مثل `0018_exam_attempts.sql`. لا تعديل migration منشور سابق؛ أضف migration جديدًا.
 - اختبارات SQL/RLS في `tests/sql/`، اختبارات الوحدة في `tests/unit/`، اختبارات المتصفح في `tests/e2e/`، والحمل في `scripts/load/`.
 - تقارير المراحل ثابتة: `docs/PHASE_REPORTS/PHASE_XX_BUILD.md` و`PHASE_XX_CHECK.md`.
-- **تحديث المرحلة ٠١ (D-311، D-312):** أُضيفت `assets/vendor/supabase/` لأصول الطرف الثالث المحلية، وأُضيف `supabase/migrations/0002_platform_meta.sql` و`tests/unit/dom.test.js`. الأسباب موثقة في `docs/DECISIONS.md`، والأسماء الأصلية لم تتغيّر.
+- **تحديث المرحلة ٠١ (D-311، D-312):** أُضيفت `assets/vendor/supabase/` لأصول الطرف الثالث المحلية، وأُضيف `supabase/migrations/0001b_platform_meta.sql` و`tests/unit/dom.test.js`. الأسباب موثقة في `docs/DECISIONS.md`، والأسماء الأصلية لم تتغيّر.
 - في التقرير لا أسماء وهمية: كل ملف في شجرة تقرير البناء يجب أن يكون موجودًا فعلًا في الريبو.
 - لا تضع أسرارًا أو `service_role` key تحت `public/`. المتصفح يستخدم publishable/anon key فقط، والصلاحيات تُفرض عبر RLS وEdge Functions.
 
@@ -289,3 +289,17 @@ docs/PHASE_REPORTS/PHASE_12_BUILD.md , PHASE_12_CHECK.md
 | 2026-11-04 | إضافة `public/pages/teacher/dashboard.html` و`public/assets/js/teacher/dashboard.js` إلى المرحلة ٠٤ | المهمة ٥ من برومبت المرحلة ٠٠ تطلب نموذج شاشة المدرس، ولم تكن الصفحة في أي مرحلة | G-04 في `docs/PROJECT_STATE.md` |
 
 لم تُحذف أو تُعدَّل أي أسماء أخرى. لا تنظيم موازٍ، ولا ملفات فارغة.
+
+## حالة الشجرة عند إغلاق المرحلة ٠٠ (٢٠٢٦-١١-٠٤)
+
+**لم يُغيَّر أي اسم أو مسار في هذا الملف.** هذه حالة تحقق فقط.
+
+| البند | النتيجة |
+|---|---|
+| ملفات المرحلة ٠٠ المنشأة | ٢٣ ملفًا: تسع وثائق في `docs/` + ٩ نماذج في `docs/WIREFRAMES/` + تقريران في `docs/PHASE_REPORTS/` + `docs/01-requirements-ar.md` (مستند العميل) + هذا الملف |
+| ملفات فارغة | لا شيء |
+| ملفات كود | **لا شيء** — المرحلة ٠٠ وثائق فقط |
+| مجلدات لم تُنشأ بعد | `public/`، `supabase/`، `tests/`، `scripts/`، `config/` — كلها كما يحددها هذا الملف في مراحلها |
+| ملاحظة | `docs/test-artifacts/` موجود وفارغ عن قصد حتى أول اختبار فعلي، ولا يُعد مخرجًا |
+
+**انحرافات مقصودة عن مسميات سابقة:** لا توجد. أي إضافة لاحقة تُسجَّل في جدول «تعديلات موثقة على الشجرة» أعلاه مع قرارها.
