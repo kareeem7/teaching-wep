@@ -67,7 +67,7 @@ test('القائمة تُبنى من رد الخادم فقط', async ({ page })
   await expect(items).toHaveCount(2);
   await expect(page.locator('[data-workspace-list]')).toContainText('مدرس أ');
   await expect(page.locator('[data-workspace-list]')).toContainText('مدرس ب');
-  await expect(page.locator('[data-workspace-status]')).toContainText('٢');
+  await expect(page.locator('[data-workspace-status]')).toContainText(/2 مساحة|٢ مساحة/);
 });
 
 test('رابط فيه مساحة أخرى لا يضيف شيئًا: القائمة من الخادم لا من العنوان', async ({ page }) => {
@@ -100,16 +100,20 @@ test('مساحة محفوظة لحساب لا تُستخدم لحساب آخر �
     );
   });
   await stubSession(page, { userId: 'user-b' });
-  await mockWorkspaces(page, [TEACHER_A]);
+  // مساحتان: لا اختيار تلقائي، فنقيس فقط أثر المساحة المحفوظة لحساب آخر
+  await mockWorkspaces(page, [TEACHER_A, TEACHER_B]);
 
   await page.goto('/pages/auth/select-workspace.html');
-  await expect(page.locator('[data-workspace-list] [data-teacher-id]')).toHaveCount(1);
+  await expect(page.locator('[data-workspace-list] [data-teacher-id]')).toHaveCount(2);
 
   const active = await page.evaluate(async () => {
     const module = await import('/assets/js/workspace.js');
     return module.getActiveWorkspace('user-b');
   });
   expect(active).toBeNull();
+
+  const stored = await page.evaluate(() => JSON.parse(window.sessionStorage.getItem('minhaj.active-workspace')));
+  expect(stored.user_id).toBe('someone-else');
 });
 
 test('حقول غير مسموح بها في الرد لا تُرسم في الصفحة', async ({ page }) => {
