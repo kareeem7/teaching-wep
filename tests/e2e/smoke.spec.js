@@ -129,7 +129,7 @@ test.describe('الحارس المحمي وهيكل الدور', () => {
   test('بعد اجتياز الحارس: الشريط الجانبي والحالة الفارغة يظهران', async ({ page }) => {
     await page.addInitScript(() => {
       window.__MINHAJ_ENV__ = {
-        supabaseUrl: 'https://e2estube2estube2est.supabase.co',
+        supabaseUrl: 'https://e2estub0000000000000.supabase.co',
         publishableKey: 'sb_publishable_e2e_stub_key',
       };
       // المكتبة الحقيقية تُحمَّل من الصفحة لاحقًا وتكتب على window.supabase؛

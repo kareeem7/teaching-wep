@@ -101,7 +101,7 @@ test('الحارس: الزائر بلا إعداد مصادقة يُرفض مع 
 test('الحارس: جلسة مُحاكاة تسمح بالمرور', async () => {
   loadShell();
   globalThis.__MINHAJ_ENV__ = {
-    supabaseUrl: 'https://unitstubunitstub1234.supabase.co',
+    supabaseUrl: 'https://unitstub000000000000.supabase.co',
     publishableKey: 'sb_publishable_unit_stub',
   };
   globalThis.supabase = {

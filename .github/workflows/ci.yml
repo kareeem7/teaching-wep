@@ -99,7 +99,8 @@ jobs:
                 for (const result of test.results || []) {
                   if (result.status !== "passed" && result.status !== "skipped") {
                     const error = result.error || {};
-                    const msg = String(error.message || error.value || "").split("\n")[0].slice(0, 300);
+                    const raw = String(error.message || error.value || "").replace(/\u001b\[[0-9;]*m/g, "");
+                    const msg = raw.split("\n").slice(0, 6).join(" | ").slice(0, 900);
                     failed.push(path + " › " + spec.title + " [" + result.status + "] " + msg);
                   }
                 }
