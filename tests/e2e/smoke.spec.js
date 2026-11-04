@@ -13,7 +13,6 @@ const PAGES = [
   { path: '/pages/health.html', title: /صحة النظام/ },
   { path: '/pages/auth/login.html', title: /الدخول/ },
   { path: '/pages/errors/404.html', title: /404/ },
-  { path: '/pages/shared/app-shell.html', title: /مساحة العمل/ },
 ];
 
 test.describe('الصفحات الأساسية', () => {
@@ -72,7 +71,7 @@ test('صفحة 404 تعطي مخرجًا بدل الطريق المسدود', as
 });
 
 test.describe('التجاوب', () => {
-  for (const path of ['/index.html', '/pages/health.html', '/pages/auth/login.html', PROTECTED]) {
+  for (const path of ['/index.html', '/pages/health.html', '/pages/auth/login.html']) {
     test(`لا تمرير أفقي: ${path}`, async ({ page }) => {
       await page.goto(path);
       const overflow = await page.evaluate(() =>
@@ -133,7 +132,9 @@ test.describe('الحارس المحمي وهيكل الدور', () => {
         supabaseUrl: 'https://e2estube2estube2est.supabase.co',
         publishableKey: 'sb_publishable_e2e_stub_key',
       };
-      globalThis.supabase = {
+      // المكتبة الحقيقية تُحمَّل من الصفحة لاحقًا وتكتب على window.supabase؛
+      // لهذا نثبّت البديل بخاصية بلا مُعيِّن حتى لا يُستبدل.
+      const stub = {
         createClient: () => ({
           auth: {
             getSession: async () => ({
@@ -143,11 +144,18 @@ test.describe('الحارس المحمي وهيكل الدور', () => {
           },
         }),
       };
+      Object.defineProperty(window, 'supabase', {
+        configurable: true,
+        get: () => stub,
+        set: () => {},
+      });
     });
     const errors = [];
     page.on('pageerror', (error) => errors.push(error.message));
-    await page.goto(PROTECTED);
-    await expect(page.locator('.app-sidebar')).toBeVisible();
+    const response = await page.goto(PROTECTED);
+    expect(response?.status()).toBe(200);
+    expect(page.url()).toContain('/pages/shared/app-shell.html');
+    await expect(page.locator('.app-sidebar')).toHaveCount(1);
     await expect(page.locator('.app-sidebar__title')).toContainText('مساحة العمل');
     await expect(page.locator('.app-nav__link')).toHaveCount(1);
     await expect(page.locator('.empty-state__title')).toContainText('لا بيانات بعد');

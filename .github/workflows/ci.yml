@@ -81,6 +81,38 @@ jobs:
       - name: تشغيل اختبارات الدخان
         run: npm run test:e2e
 
+      - name: تلخيص الاختبارات الفاشلة في تعليقات التشغيل
+        if: failure()
+        run: |
+          node -e '
+          const fs = require("node:fs");
+          const file = "test-results/results.json";
+          if (!fs.existsSync(file)) {
+            console.log("::error::لا يوجد تقرير JSON لاختبارات المتصفح");
+            process.exit(0);
+          }
+          const report = JSON.parse(fs.readFileSync(file, "utf8"));
+          const failed = [];
+          const walk = (suite, path) => {
+            for (const spec of suite.specs || []) {
+              for (const test of spec.tests || []) {
+                for (const result of test.results || []) {
+                  if (result.status !== "passed" && result.status !== "skipped") {
+                    const error = result.error || {};
+                    const msg = String(error.message || error.value || "").split("\n")[0].slice(0, 300);
+                    failed.push(path + " › " + spec.title + " [" + result.status + "] " + msg);
+                  }
+                }
+              }
+            }
+            for (const child of suite.suites || []) walk(child, path + (path ? " › " : "") + child.title);
+          };
+          walk(report, "");
+          for (const line of failed.slice(0, 40)) console.log("::error::" + line);
+          console.log("عدد الحالات غير الناجحة: " + failed.length);
+          '
+          exit 0
+
       - name: حفظ تقرير Playwright عند الفشل
         if: failure()
         uses: actions/upload-artifact@v4
