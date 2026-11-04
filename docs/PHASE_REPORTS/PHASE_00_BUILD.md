@@ -69,7 +69,7 @@ find . -type f | wc -l            # 1 ملف (README.md)
 | `phase-prompts/00-project-context.md` | 82 | السياق المشترك (مرجع) |
 | `phase-prompts/04-github-workflow-ar.md` | 103 | سياسة GitHub (مرجع) |
 
-**إجمالي التوثيق:** ٢٦ ملفًا، ٢٦٨٨ سطرًا من Markdown.
+**الأعداد الفعلية (من `git show --stat HEAD`):** ٢٦ ملفًا مضافًا، **٢٩٣٠ سطرًا** إضافةً. إجمالي المستودع: ٢٧ ملف Markdown بـ٢٩٣٢ سطرًا (شاملًا `README.md` الموجود مسبقًا بسطرين).
 
 **ملف مؤقت أُزيل:** `phase-prompts/00-intake-status.md` كُتب في محاولة سابقة لتوثيق انتظار المرفقات، ثم حُذف لأن `PROJECT_STATE.md` و`APPROVALS.md` يغطيانه، ولتفادي تنظيم موازٍ (القاعدة 18).
 
