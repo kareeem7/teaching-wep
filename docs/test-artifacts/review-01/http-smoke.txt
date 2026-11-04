@@ -1,8 +1,0 @@
-/index.html                                                200
-/pages/health.html                                         200
-/pages/auth/login.html                                     200
-/pages/errors/403.html                                     200
-/pages/errors/404.html                                     200
-/pages/errors/500.html                                     200
-/assets/vendor/bootstrap/bootstrap.bundle.min.js           200
-وسم bootstrap في الصفحات: 1 (index) / 1 (health)
