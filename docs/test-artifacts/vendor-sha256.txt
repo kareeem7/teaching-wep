@@ -1,3 +1,0 @@
-e4fd49181388c48ec5040bd3fe66f57c29c8e67fcd8502b3354b96ec7ab47cc7  public/assets/vendor/bootstrap/bootstrap.bundle.min.js
-b9048c83571ab73da54395b6b307219f9eb9c5447f4f8edb17a069eb0f19465a  public/assets/vendor/bootstrap/bootstrap.rtl.min.css
-a867edbcfb029370aeec7223dd6180b560b621fbe3bc64c6584fb0369d1b7bce  public/assets/vendor/supabase/supabase.js
