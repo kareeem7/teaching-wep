@@ -1,0 +1,169 @@
+/**
+ * نقطة تشغيل الواجهة المشتركة لكل الصفحات.
+ * تفعل ثلاثة أشياء فقط في المرحلة ٠١: تحقن المكوّنات، تعرض حالة الإعداد بصدق،
+ * وتشغّل حارس الواجهة. لا منطق أكاديمي هنا (المراحل ٠٣+).
+ */
+import { getConfig } from './config.js';
+import { getSupabaseStatus } from './supabase-client.js';
+import { guardPage } from './auth-guard.js';
+import { renderNavbar } from './components/navbar.js';
+import { renderSidebar } from './components/sidebar.js';
+import { setStatus, announce, qsa } from './ui.js';
+
+/** نسخة الواجهة كما هي في package.json (مكررة نصًا في وسوم meta). */
+export const APP_VERSION = '0.1.0';
+
+/**
+ * وصف حالة الإعداد بالعربية.
+ * @param {ReturnType<typeof getConfig>} config
+ * @returns {{text: string, tone: 'ok'|'warn'|'danger'}}
+ */
+export function describeConfig(config) {
+  if (!config.ok) return { text: 'إعداد غير صالح — راجع الرسائل', tone: 'danger' };
+  if (!config.configured) return { text: 'غير مهيأة (لا مفاتيح بعد)', tone: 'warn' };
+  return { text: 'مهيأة', tone: 'ok' };
+}
+
+/**
+ * يعرض حالة الإعداد في كل عنصر يحمل `data-config-status`.
+ * @param {Document} [doc]
+ */
+export function hydrateConfigStatus(doc = document) {
+  const config = getConfig();
+  const state = describeConfig(config);
+  qsa('[data-config-status]', doc).forEach((element) => setStatus(element, state));
+  qsa('[data-config-detail]', doc).forEach((element) => {
+    if (config.errors.length > 0) {
+      element.textContent = config.errors.join(' · ');
+      element.hidden = false;
+    } else {
+      element.hidden = true;
+    }
+  });
+  return { config, state };
+}
+
+/**
+ * يبني جدول الفحوص الحيّة لصفحة الصحة. كل بند يُنفَّذ فعلًا في المتصفح.
+ * @param {Document} [doc]
+ */
+export function renderHealth(doc = document) {
+  const host = doc.querySelector('#health-checks');
+  if (!host) return null;
+  const config = getConfig();
+  const supabaseStatus = getSupabaseStatus();
+  const stylesheet = doc.querySelector('link[rel="stylesheet"][href*="bootstrap.rtl.min.css"]');
+  const body = doc.body;
+
+  const checks = [
+    {
+      label: 'وحدات JavaScript محمّلة',
+      ok: typeof getConfig === 'function',
+      detail: `الإصدار ${APP_VERSION}`,
+    },
+    {
+      label: 'اتجاه الصفحة واللغة',
+      ok: doc.documentElement.lang === 'ar' && body.getAttribute('dir') !== 'ltr',
+      detail: `${doc.documentElement.lang} · ${body.getAttribute('dir')}`,
+    },
+    {
+      label: 'Bootstrap RTL محلي',
+      ok: Boolean(stylesheet) && stylesheet.getAttribute('href').startsWith('../assets/'),
+      detail: stylesheet ? 'محلي داخل public/assets/vendor' : 'غير موجود',
+    },
+    {
+      label: 'إعداد Supabase',
+      ok: config.ok,
+      detail: describeConfig(config).text,
+    },
+    {
+      label: 'الاتصال بقاعدة البيانات',
+      ok: null,
+      detail: supabaseStatus.ready ? 'مهيأ — الاختبار الفعلي في المرحلة ٠٢' : 'غير منطبق الآن (المرحلة ٠٢)',
+    },
+  ];
+
+  const rows = checks.map((check) => {
+    const tone = check.ok === null ? 'info' : check.ok ? 'ok' : 'danger';
+    const text = check.ok === null ? 'غير منطبق' : check.ok ? 'سليم' : 'خلل';
+    return `
+      <tr>
+        <th scope="row">${check.label}</th>
+        <td><span class="status status--${tone}">${text}</span></td>
+        <td class="text-muted-mh">${check.detail}</td>
+      </tr>`;
+  });
+
+  host.innerHTML = `
+    <table class="table align-middle mb-0">
+      <caption class="visually-hidden-mh">نتائج فحوص الصحة المنفذة في المتصفح</caption>
+      <thead>
+        <tr><th scope="col">الفحص</th><th scope="col">النتيجة</th><th scope="col">التفصيل</th></tr>
+      </thead>
+      <tbody>${rows.join('')}</tbody>
+    </table>`;
+
+  return checks;
+}
+
+/** التشغيل. */
+export async function bootstrap() {
+  const doc = document;
+
+  // الشريط العلوي والقائمة الجانبية (إن وُجد مكانهما)
+  const isNested = doc.body.dataset.pageDepth === 'nested';
+  const base = isNested ? '../../' : '';
+  renderNavbar({
+    brandHref: `${base}index.html`,
+    meta: doc.body.dataset.roleLabel ?? '',
+    links: [
+      { label: 'الدخول', href: `${base}pages/auth/login.html` },
+      { label: 'صحة النظام', href: `${base}pages/health.html` },
+    ],
+  });
+  if (doc.body.dataset.roleLabel) {
+    renderSidebar({
+      title: doc.body.dataset.roleLabel,
+      links: [
+        { label: 'الرئيسية', href: `${base}index.html`, current: true },
+      ],
+    });
+  }
+
+  hydrateConfigStatus(doc);
+  renderHealth(doc);
+
+  const yearTarget = doc.querySelector('[data-current-year]');
+  if (yearTarget) yearTarget.textContent = String(new Date().getFullYear());
+
+  // رسالة سبب إعادة التوجيه إلى صفحة الدخول (من auth-guard)
+  const notice = doc.querySelector('[data-login-notice]');
+  if (notice) {
+    const reason = new URLSearchParams(doc.defaultView.location.search).get('reason');
+    const reasons = {
+      unconfigured: 'المصادقة لم تُهيَّأ بعد (المرحلة ٠٢). الصفحات المحمية ترفض الزائر حتى ذلك الحين.',
+      'invalid-config': 'إعداد Supabase غير صالح — راجع الرسائل أدناه.',
+      'no-session': 'لا توجد جلسة دخول. سجّل الدخول بعد تفعيل المصادقة.',
+      'library-missing': 'مكتبة Supabase المحلية لم تُحمَّل.',
+      'session-error': 'تعذّر قراءة الجلسة الحالية.',
+    };
+    if (reason) {
+      notice.textContent = reasons[reason] ?? 'تم تحويلك إلى صفحة الدخول.';
+      notice.hidden = false;
+    }
+  }
+
+  const guard = await guardPage();
+  if (!guard.allowed && guard.reason !== 'public') {
+    doc.body.dataset.authState = 'denied';
+    announce('تحتاج إلى تسجيل الدخول لعرض هذه الصفحة.');
+  }
+}
+
+if (typeof document !== 'undefined') {
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { void bootstrap(); });
+  } else {
+    void bootstrap();
+  }
+}

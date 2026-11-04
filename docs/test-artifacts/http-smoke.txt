@@ -1,0 +1,19 @@
+# فحص الصفحات عبر HTTP — 2026-11-04T21:19:49Z
+# الخادم: python3 -m http.server 4173 --bind 0.0.0.0 --directory public
+
+/                                                       HTTP 200  3624 bytes
+/index.html                                             HTTP 200  3624 bytes
+/pages/health.html                                      HTTP 200  2440 bytes
+/pages/auth/login.html                                  HTTP 200  3084 bytes
+/pages/errors/403.html                                  HTTP 200  1784 bytes
+/pages/errors/404.html                                  HTTP 200  1775 bytes
+/pages/errors/500.html                                  HTTP 200  1757 bytes
+/assets/css/app.css                                     HTTP 200  9830 bytes
+/assets/js/app.js                                       HTTP 200  6524 bytes
+/assets/js/config.js                                    HTTP 200  6364 bytes
+/assets/vendor/bootstrap/bootstrap.rtl.min.css          HTTP 200  232219 bytes
+
+# تحقق من العلامات الأساسية في الصفحات:
+/index.html                  lang=ar:1 dir=rtl:1 app.js:1 bootstrap-rtl:1
+/pages/health.html           lang=ar:1 dir=rtl:1 app.js:1 bootstrap-rtl:1
+/pages/auth/login.html       lang=ar:1 dir=rtl:1 app.js:1 bootstrap-rtl:1

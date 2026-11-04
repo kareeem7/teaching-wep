@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="مِنهاج — منصة إدارة المدرسين والطلاب والمجموعات والحضور والامتحانات.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.1.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — الصفحة الرئيسية</title>
+  <link rel="stylesheet" href="assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="assets/css/app.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <main id="main" class="app-content">
+    <h1>مِنهاج</h1>
+    <p class="text-muted-mh">
+      منصة تساعد المدرّس على إدارة طلابه ومجموعاته وحضوره ودرجاته ودروسه وامتحاناته.
+      هذه <strong>المرحلة ٠١</strong>: الأساس التقني والواجهة فقط، بلا وظائف أكاديمية بعد.
+    </p>
+
+    <div class="card-grid mt-4">
+      <section class="card-mh">
+        <h2 class="card-mh__title">حالة النظام</h2>
+        <p class="mb-2">إعداد الاتصال: <span class="status status--info" data-config-status>جارٍ الفحص…</span></p>
+        <p class="field__hint" data-config-detail hidden></p>
+        <a class="btn-mh btn-mh--ghost" href="pages/health.html">فتح صفحة الصحة</a>
+      </section>
+
+      <section class="card-mh">
+        <h2 class="card-mh__title">الدخول</h2>
+        <p class="text-muted-mh">صفحة الدخول موجودة بشكلها النهائي تقريبًا، لكنها <strong>غير مفعّلة</strong> حتى المرحلة ٠٢.</p>
+        <a class="btn-mh btn-mh--ghost" href="pages/auth/login.html">عرض صفحة الدخول</a>
+      </section>
+
+      <section class="card-mh">
+        <h2 class="card-mh__title">ما تم في هذه المرحلة</h2>
+        <ul class="stack-2 mb-0">
+          <li>هيكل المشروع بالأسماء الملزمة.</li>
+          <li>Bootstrap 5 RTL ومكتبة Supabase محليًا (بلا CDN).</li>
+          <li>ألوان وخطوط هوية «مِنهاج» المعتمدة.</li>
+          <li>حارس واجهة أولي + صفحات خطأ.</li>
+          <li>ESLint وStylelint وHTMLHint واختبارات وحدة وPlaywright وCI.</li>
+        </ul>
+      </section>
+
+      <section class="card-mh">
+        <h2 class="card-mh__title">ما لا يعمل بعد</h2>
+        <p class="text-muted-mh mb-2">بصراحة، حتى لا يُفهم أن المنصة جاهزة:</p>
+        <ul class="stack-2 mb-0">
+          <li>لا تسجيل دخول حقيقي ولا جلسات.</li>
+          <li>لا قاعدة بيانات ولا جداول.</li>
+          <li>لا طلاب ولا مجموعات ولا حضور.</li>
+          <li>لا دروس ولا بنك أسئلة ولا امتحانات.</li>
+        </ul>
+      </section>
+    </div>
+  </main>
+
+  <footer class="app-footer">
+    مِنهاج · الإصدار 0.1.0 · <span class="tnum" data-current-year></span> · واجهة عربية RTL
+  </footer>
+
+  <script src="assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="assets/js/app.js"></script>
+</body>
+</html>

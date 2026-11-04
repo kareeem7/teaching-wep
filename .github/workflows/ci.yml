@@ -1,0 +1,90 @@
+name: CI
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: جودة (lint + اختبارات وحدة)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: تثبيت نظيف
+        run: npm ci
+
+      - name: ESLint
+        run: npm run lint:js
+
+      - name: Stylelint
+        run: npm run lint:css
+
+      - name: HTMLHint
+        run: npm run lint:html
+
+      - name: اختبارات الوحدة
+        run: npm run test:unit
+
+      - name: فحص الأسرار في public/
+        run: |
+          set -euo pipefail
+          # يبحث عن مفتاح سرّي حقيقي أو JWT حقيقي — لا عن كلمة service_role في نصوص الحماية
+          if grep -rInE "sb_secret_[A-Za-z0-9]{8,}|eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9\.[A-Za-z0-9_-]{10,}|SUPABASE_SERVICE_ROLE" public; then
+            echo "::error::عُثر على مفتاح أو سرّ داخل public/ — ممنوع نهائيًا"
+            exit 1
+          fi
+          echo "✅ لا أسرار في public/"
+
+      - name: فحص عدم وجود .env أو node_modules مرفوعة
+        run: |
+          set -euo pipefail
+          # .env.example مسموح ومقصود؛ الممنوع هو ملفات البيئة الفعلية
+          if git ls-files | grep -E 'node_modules/|(^|/)\.env$|(^|/)\.env\.(local|production|development|test|staging)'; then
+            echo "::error::ملفات بيئة أو تبعيات مرفوعة للتتبع"
+            exit 1
+          fi
+          echo "✅ سجل Git نظيف من الأسرار والتبعيات"
+
+  e2e:
+    name: اختبارات متصفح (Playwright)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: تثبيت نظيف
+        run: npm ci
+
+      - name: تثبيت Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: تشغيل اختبارات الدخان
+        run: npm run test:e2e
+
+      - name: حفظ تقرير Playwright عند الفشل
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 7
