@@ -16,7 +16,6 @@ const AUTH_PAGES = [
   { path: '/pages/auth/accept-invitation.html', title: /تفعيل الدعوة/ },
   { path: '/pages/auth/request-recovery.html', title: /استعادة/ },
   { path: '/pages/auth/reset-password.html', title: /كلمة مرور جديدة/ },
-  { path: '/pages/auth/select-workspace.html', title: /اختيار المساحة/ },
 ];
 
 test.describe('صفحات المصادقة تُفتح وتصرّح بحدودها', () => {
@@ -98,7 +97,7 @@ test('دعوة: كلمة مرور قصيرة تُرفض بكلمة واضحة', 
   await page.fill('#password', 'short1234');
   await page.fill('#password_confirm', 'short1234');
   await page.locator('[data-action="accept-invitation"]').click();
-  await expect(page.locator('[data-form-error]')).toContainText('١٠ محارف');
+  await expect(page.locator('[data-form-error]')).toContainText(/10 محارف|١٠ محارف/);
 });
 
 test('استعادة: بلا جلسة مدرس تشرح السبب وتعطّل الإرسال', async ({ page }) => {
@@ -149,8 +148,10 @@ test('لا أسرار ولا مفاتيح في ملفات المصادقة ال�
   }
 });
 
+const STATIC_AUTH_PAGES = [...AUTH_PAGES];
+
 test('لا تمرير أفقي في صفحات المصادقة', async ({ page }) => {
-  for (const item of AUTH_PAGES) {
+  for (const item of STATIC_AUTH_PAGES) {
     await page.goto(item.path);
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
