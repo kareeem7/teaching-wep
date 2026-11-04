@@ -3,7 +3,7 @@
 المرحلة: 03/04 · الصفحة: `public/pages/teacher/dashboard.html` · السكربت: `public/assets/js/teacher/dashboard.js`
 المتطلبات: REQ-01، REQ-05، REQ-07، REQ-15
 
-> ملاحظة: صفحة لوحة المدرس غير مذكورة صراحة في قائمة المرحلة ٠٤ أو ٠٥ بالشجرة. أثبتها كقرار في `docs/DECISIONS.md` قبل إنشائها، أو اجعل `students.html` هي نقطة الدخول.
+> **حالة المسار:** المهمة ٥ من برومبت المرحلة ٠٠ تطلب صراحةً نموذج شاشة «المدرس». أُضيفت `public/pages/teacher/dashboard.html` و`public/assets/js/teacher/dashboard.js` إلى قائمة ملفات المرحلة ٠٤ في `05-project-structure-ar.md` مع سبب موثق، بدل تركها خارج الشجرة. كانت هذه الفجوة B-02 في التسليم السابق.
 
 ## الغرض
 

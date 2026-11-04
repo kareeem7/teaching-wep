@@ -136,9 +136,11 @@ supabase/migrations/0011_rls_students_groups.sql
 supabase/functions/students-register/index.js
 supabase/functions/groups-transfer/index.js
 supabase/functions/assistants-permissions/index.js
+public/pages/teacher/dashboard.html      # إضافة موثقة: المهمة ٥ تطلب نموذج لوحة المدرس (G-04)
 public/pages/teacher/students.html , student-create.html , student-profile.html
 public/pages/teacher/locations.html , groups.html , group-detail.html
 public/pages/teacher/assistants.html , assistant-permissions.html
+public/assets/js/teacher/dashboard.js    # إضافة موثقة مع الصفحة أعلاه
 public/assets/js/teacher/students.js , locations.js , groups.js , assistants.js
 tests/sql/students_groups_rls.test.sql
 tests/e2e/students-groups.spec.js , assistant-scope.spec.js
@@ -277,3 +279,11 @@ docs/PHASE_REPORTS/PHASE_12_BUILD.md , PHASE_12_CHECK.md
 - برومبت التنفيذ لكل مرحلة يتضمن قائمة ملفاتها حرفيًا، وبرومبت الفحص يطابق الأسماء.
 - الفاحص يسجل أي ملف ناقص أو اسم مخالف كعيب، ولا يقبل «هيكل مشابه» بديلًا عن الأسماء المعتمدة.
 - أي وظيفة حساسة في المتصفح فقط، أو `service_role` key في الواجهة، عيب أمني مانع.
+
+## تعديلات موثقة على الشجرة
+
+| التاريخ | التعديل | السبب | المرجع |
+|---|---|---|---|
+| 2026-11-04 | إضافة `public/pages/teacher/dashboard.html` و`public/assets/js/teacher/dashboard.js` إلى المرحلة ٠٤ | المهمة ٥ من برومبت المرحلة ٠٠ تطلب نموذج شاشة المدرس، ولم تكن الصفحة في أي مرحلة | G-04 في `docs/PROJECT_STATE.md` |
+
+لم تُحذف أو تُعدَّل أي أسماء أخرى. لا تنظيم موازٍ، ولا ملفات فارغة.
