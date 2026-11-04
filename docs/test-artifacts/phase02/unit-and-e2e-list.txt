@@ -1,0 +1,19 @@
+== المرحلة ٠٢ — أدلة محلية ==
+
+## git
+b81184e test(e2e): measure workspace reuse without triggering auto-selection
+fc968b9 test(e2e): 20-char project ref for the workspace stub and align the phase-01 login case with phase 02
+146f31e test(e2e): drop redirecting page from the open-loop and relax digit wording
+63e2b9a feat(phase-02): auth pages, client api/workspace modules, rls sql tests and browser specs
+2b040f9 feat(phase-02): identity workspace invitation and recovery migrations plus four edge functions
+ab9bdaa feat(phase-02): shared auth primitives, rate limiting, cors and error envelope with tests
+2523268 Merge pull request #6 from kareeem7/arena/71eec196-teaching-wep
+
+## node --test
+# tests 52
+# pass 52
+# fail 0
+# duration_ms 981.839439
+
+## playwright --list
+Total: 84 tests in 3 files
