@@ -7,6 +7,9 @@
  * المرجع: AUTH_DESIGN §٣ و§٥، قرارات C-28 (هاتف)، C-32 (خطر الاستعادة المقبول).
  */
 
+import { apiError } from './errors.js';
+import { isBlockedOrigin } from './cors.js';
+
 /** سياسة الجلسة: التوكن يعيش ساعة، ويُرفض في كل طلب إن كان أقدم من `sessions_valid_after`. */
 export const SESSION_MAX_AGE_SECONDS = 3600;
 /** صلاحية دعوة المدرس: ٧٢ ساعة (AUTH_DESIGN §٣ ب). */
@@ -272,3 +275,97 @@ export function publicProfile(row) {
 
 /** رسالة فشل الدخول الموحدة: لا تفريق بين «لا يوجد حساب» و«كلمة خطأ». */
 export const UNIFIED_LOGIN_ERROR = 'بيانات الدخول غير صحيحة.';
+
+/* =====================================================================
+ *  طبقة الطلب المشتركة بين دوال المصادقة
+ *  (كانت في ملف منفصل، ودُمجت هنا للحفاظ على قائمة ملفات المرحلة كما هي ملزمة)
+ * ===================================================================== */
+/** بريد داخلي اصطناعي لمن يدخل بالكود — لا يظهر للمستخدم ولا يُرسل إليه شيء. */
+export function syntheticEmailForCode(code) {
+  return `code-${String(code).toLowerCase()}@students.minhaj.invalid`;
+}
+
+/** عنوان IP من رؤوس الوسيط، أو 'unknown'. */
+export function clientIp(request) {
+  const forwarded = request.headers.get('x-forwarded-for');
+  if (forwarded) return forwarded.split(',')[0].trim();
+  return request.headers.get('x-real-ip') ?? 'unknown';
+}
+
+/**
+ * يقرأ JSON بحد أقصى للحجم، ويرفض ما ليس كائنًا.
+ * @param {Request} request
+ * @param {number} [maxBytes]
+ */
+export async function readJson(request, maxBytes = 4096) {
+  const contentType = request.headers.get('content-type') ?? '';
+  if (!contentType.includes('application/json')) throw apiError('INVALID_INPUT');
+  const text = await request.text();
+  if (text.length === 0) throw apiError('INVALID_INPUT');
+  if (text.length > maxBytes) throw apiError('INVALID_INPUT', { details: 'payload-too-large' });
+  try {
+    const parsed = JSON.parse(text);
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) throw new Error('not-object');
+    return /** @type {Record<string, unknown>} */ (parsed);
+  } catch {
+    throw apiError('INVALID_INPUT');
+  }
+}
+
+/** يفك حمولة JWT بلا تحقق توقيع — للقراءة فقط بعد أن يتحقق الخادم من الجلسة. */
+export function decodeJwtPayload(token) {
+  if (typeof token !== 'string') return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  try {
+    const payload = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const padded = payload.padEnd(Math.ceil(payload.length / 4) * 4, '=');
+    const json = atob(padded);
+    const bytes = Uint8Array.from(json, (char) => char.charCodeAt(0));
+    return JSON.parse(new TextDecoder().decode(bytes));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * يتحقق من جلسة العميل عبر Auth، ويعيد الملف.
+ * @param {{auth: {getUser: (token: string) => Promise<{data: unknown, error: unknown}>}}} db
+ * @param {string|null} token
+ */
+export async function requireSession(db, token) {
+  if (typeof token !== 'string' || token.split('.').length !== 3) throw apiError('INVALID_SESSION');
+  const { data, error } = await db.auth.getUser(token);
+  if (error || !data?.user?.id) throw apiError('INVALID_SESSION');
+
+  const claims = decodeJwtPayload(token) ?? {};
+  const issuedAt = Number(claims.iat);
+  if (!Number.isFinite(issuedAt)) throw apiError('INVALID_SESSION');
+  if (Date.now() / 1000 - issuedAt > SESSION_MAX_AGE_SECONDS + 60) {
+    throw apiError('INVALID_SESSION', { details: 'session-too-old' });
+  }
+
+  return { userId: data.user.id, issuedAt, claims };
+}
+
+/** يستخرج رمز Bearer من الرأس. */
+export function bearerToken(request) {
+  const header = request.headers.get('authorization');
+  if (typeof header !== 'string') return null;
+  const match = /^Bearer\s+(.+)$/i.exec(header.trim());
+  return match ? match[1] : null;
+}
+
+/** هل الطلب مقبول من ناحية الأصل والطريقة؟ يرمي أخطاء مناسبة. */
+export function guardRequest(request, allowlist, { method = 'POST' } = {}) {
+  if (isBlockedOrigin(request, allowlist)) throw apiError('FORBIDDEN', { details: 'origin' });
+  if (request.method !== method) throw apiError('METHOD_NOT_ALLOWED');
+}
+
+/** يبني عنوان الرابط للدعوة/الاستعادة من متغير بيئة، بلا افتراض نطاق إنتاجي. */
+export function buildLink(env, path, token) {
+  const base = typeof env === 'string' ? env : '';
+  const prefix = base.replace(/\/+$/, '');
+  return `${prefix}${path}?token=${encodeURIComponent(token)}`;
+}
+

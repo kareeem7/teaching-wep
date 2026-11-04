@@ -158,6 +158,9 @@ export function createDb(options) {
           query: { scope: 'global' },
         });
       },
+      deleteUser(userId) {
+        return request(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, { method: 'DELETE' });
+      },
       getUser(accessToken) {
         return request('/auth/v1/user', {
           headers: { authorization: `Bearer ${accessToken}` },

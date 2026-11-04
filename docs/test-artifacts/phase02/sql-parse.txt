@@ -1,0 +1,6 @@
+== تحقق نحوي بمحلل PostgreSQL الحقيقي (libpg_query عبر pglast v8.7) ==
+supabase/migrations/0001_extensions.sql: OK — 13 عبارة (منها 0 DO)
+supabase/migrations/0002_identity_profiles.sql: OK — 22 عبارة (منها 1 DO)
+supabase/migrations/0003_teacher_workspaces.sql: OK — 29 عبارة (منها 1 DO)
+supabase/migrations/0004_invitations_recovery.sql: OK — 26 عبارة (منها 1 DO)
+supabase/migrations/0005_rls_identity.sql: OK — 92 عبارة (منها 0 DO)
