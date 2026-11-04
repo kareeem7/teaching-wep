@@ -1,0 +1,121 @@
+# بنية Supabase — SUPABASE_ARCHITECTURE
+
+آخر تحديث: 2026-11-04 · المرحلة: 00 · تصميم فقط. لا مشروع Supabase مُنشأ.
+
+## 1. النطاق
+
+- واجهة ثابتة (Static) تُخدَم من استضافة اقتصادية.
+- خلفية Supabase مُدارة: PostgreSQL + Auth + Storage + Edge Functions + RLS.
+- **لا خادم تطبيق تقليدي، لا Redis، لا Laravel/Inertia/React/Tailwind** (D-016).
+- **لا استخدام لأي مشروع Supabase آخر في الحساب** مثل مشاريع clinic (القاعدة 14).
+
+## 2. البيئات
+
+| البيئة | الاستخدام | البيانات |
+|---|---|---|
+| محلية (Supabase CLI محلي) | التطوير والاختبارات | بيانات وهمية فقط |
+| staging | تجربة وتحقق قبل الإطلاق | بيانات وهمية، لا حقيقية |
+| production | التشغيل | بيانات حقيقية — لا تُستخدم للاختبار أبدًا |
+
+**قاعدة صارمة:** اختبارات SQL/RLS لا تعمل على production. لا `reset` ولا حذف بيانات على بيئة حقيقية. نسخة احتياطية قبل أي تغيير خطير (القاعدة 7).
+
+## 3. Migrations
+
+- المسار: `supabase/migrations/NNNN_name.sql`، أسماء رقمية وصفية ثابتة.
+- **لا تعديل migration منشور**؛ التصحيح بـmigration جديد.
+- كل migration يجب أن يكون آمنًا للتكرار التلقائي (idempotent حيث ينطبق) وبلا حذف بيانات.
+- التخطيط: `0001` أساس حتى `0023` في المرحلة ٠٠ من التصميم — التفصيل في `05-project-structure-ar.md`.
+
+## 4. أنماط RLS الملزمة
+
+1. `enable row level security` على **كل** جدول يحمل بيانات مستخدم (D-018).
+2. **لا سياسة تعتمد على قيمة يرسلها العميل** كدليل ملكية. `teacher_id` يُشتق من الجلسة:
+   - عبر جدول ربط `teacher_workspaces` وربط `auth.uid()`، أو
+   - عبر دالة `security definer` صغيرة `current_teacher_id()` أو `is_teacher_owner(id)`.
+3. سياسات منفصلة للقراءة والكتابة؛ لا `for all` واسعة.
+4. نطاق المساعد يُفحص بشرط مركّب: الفعل ممنوح **و** الصف داخل `scope_group_ids`.
+5. السوبر أدمن: سياسة `select` فقط على الأكاديمي، **بلا** `insert/update/delete`.
+6. الطالب: `select` على صفوفه هو فقط (`auth.uid()` = `profiles.id`)، ودون مفاتيح إجابة قبل السماح.
+7. اختبار كل سياسة بحالة سلبية (يجب أن تُرفض) وحالة موجبة (يجب أن تنجح).
+
+## 5. Edge Functions
+
+المسار `supabase/functions/<function-name>/index.js`، والمشتركات في `_shared/`.
+
+| المجموعة | الدوال | المرحلة |
+|---|---|---|
+| هوية | `auth-login`, `auth-recovery`, `invite-accept`, `workspace-select` | 02 |
+| إدارة | `admin-teachers`, `admin-instructions` | 03 |
+| طلاب | `students-register`, `groups-transfer`, `assistants-permissions` | 04 |
+| حضور | `attendance-save`, `student-profile` | 05 |
+| دروس | `lessons-publish`, `attachments-sign` | 06 |
+| أسئلة | `exams-publish` | 07 |
+| محرك | `exam-start`, `exam-save`, `exam-submit`, `exam-grade`, `attempt-finalize` | 08 |
+| نتائج | `attempt-events`, `results-release` | 09 |
+| تقارير | `reports-export`, `notifications-dispatch` | 10 |
+
+**مشتركات مخطط لها:** `cors.js`, `auth.js`, `db.js`, `errors.js`, `rate-limit.js`, `audit.js`, `youtube.js`, `sanitizer.js`, `question-validator.js`, `random-sampler.js`, `server-clock.js`, `idempotency.js`, `grading.js`, `csv-export.js`, `ranking.js`.
+
+**قواعد الدوال:**
+- تتحقق من الهوية والصلاحية بنفسها، ولا تثق بمدخلات العميل.
+- تستخدم مفتاح خدمة **داخل بيئة الدالة فقط**، لا في الواجهة ولا في Git.
+- تعيد أخطاء موحدة عبر `errors.js` بلا تسريب تفاصيل داخلية.
+- CORS محدود لمصدر الواجهة المعتمد، لا `*` في الإنتاج.
+
+## 6. الحماية من التكرار (idempotency)
+
+| العملية | الضمان |
+|---|---|
+| `exam-start` | فهرس جزئي فريد للمحاولة النشطة؛ طلبان متزامنان = محاولة واحدة |
+| `exam-save` | `unique(attempt_question_id)` + رفض بعد انتهاء الوقت |
+| `exam-submit` | `submitted_at` يُكتب مرة؛ الإعادة ترجع نفس النتيجة |
+| `exam-grade` | `unique(attempt_id)` في `attempt_results` |
+| `attendance-save` | `unique(session_id, student_profile_id)` + `on conflict do update` |
+| `notifications-dispatch` | مفتاح idempotency لكل دفعة (منع التنبيه المضاعف) |
+| `reports-export` | تسجيل في `exports_log` قبل التنفيذ |
+
+`_shared/idempotency.js`: مفتاح من العميل + سجل نتائج سابقة، مع نافذة زمنية.
+
+## 7. Storage
+
+- Buckets خاصة (غير عامة): صور الدروس، مرفقات الأسئلة، اللوجو المؤقت.
+- الوصول عبر signed URLs قصيرة العمر أو سياسات Storage مربوطة بـ`teacher_id`.
+- تحقق من النوع والحجم قبل الرفع؛ رفض التنفیذ (لا `.html`, `.js`, `.svg` بلا تعقيم).
+- لا فيديو مرفوع؛ يوتيوب فقط (L-04, L-05).
+
+## 8. المهام الخلفية
+
+- `pg_cron` لإغلاق المحاولات المنتهية (`attempt-finalize`) وللتنبيهات المجدولة.
+- شبكة أمان: **كل وصول لمحاولة يتحقق من الانتهاء بنفسه**، فلا يعتمد على نجاح المهمة المجدولة.
+- كل مهمة مسجّلة، قابلة للتشغيل مرة أخرى بلا أثر مضاعف.
+- لا Redis ولا قائمة انتظار خارجية في الإصدار الأول.
+
+## 9. الأسرار والإعدادات
+
+| المكان | المحتوى |
+|---|---|
+| المتصفح (`public/assets/js/config.js`) | `SUPABASE_URL` + publishable/anon key فقط |
+| `.env.example` | أسماء متغيرات فقط بلا قيم |
+| بيئة Edge Functions | `service_role` والمفاتيح السرية |
+| Git | **لا شيء سري** — `.gitignore` يمنع `.env` |
+
+## 10. الأداء
+
+- فهارس إلزامية: `teacher_id` في كل جدول تابع، `(exam_id, student_profile_id)`، `(session_id, student_profile_id)`، `(attempt_id)`.
+- تجنّب الاستعلامات N+1 في الواجهة؛ استخدام `select` محدد الأعمدة.
+- الترقيم على الجداول الطويلة إلزامي.
+- هدف الحمل ١٠٠–١٠٠٠ (D-022) — يُقاس على staging بمواصفات مثبتة، لا يُعلن كضمان.
+
+## 11. المراقبة والتدقيق
+
+- `audit_log` للعمليات الحساسة (دعوة، تفعيل، إيقاف، صلاحيات، استعادة، تعديل حضور/درجة، مفتاح إجابة، نشر نتائج، تصدير).
+- لا كلمات مرور ولا رموز ولا إجابات كاملة في السجل.
+- سجلات الدوال بلا بيانات شخصية غير لازمة.
+- المدرس/المساعد لا يستطيع حذف سجل عملياته.
+
+## 12. النسخ والاستعادة (المرحلة ١١)
+
+- نسخ مشفرة خارج الخادم، بجدول احتفاظ معتمد (D-202).
+- RPO/RTO يعتمدهما العميل صراحة.
+- اختبار استعادة فعلي موقوت قبل الإطلاق؛ التقرير `docs/reports/RESTORE_TEST_REPORT.md`.
+- حماية نقطة زمنية قبل امتحانات حقيقية مهمة (بتكلفة يوافق عليها المالك).
