@@ -1,43 +1,39 @@
 Listing tests:
-  [desktop-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html
-  [desktop-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html
-  [desktop-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html
-  [desktop-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html
-  [desktop-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/shared/app-shell.html
-  [desktop-chromium] › smoke.spec.js:33:1 › الاتجاه واللغة عربيان
-  [desktop-chromium] › smoke.spec.js:39:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج)
-  [desktop-chromium] › smoke.spec.js:46:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا
-  [desktop-chromium] › smoke.spec.js:53:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق
-  [desktop-chromium] › smoke.spec.js:61:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة
-  [desktop-chromium] › smoke.spec.js:69:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود
-  [desktop-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /index.html
-  [desktop-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /pages/health.html
-  [desktop-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html
-  [desktop-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /pages/shared/app-shell.html
-  [desktop-chromium] › smoke.spec.js:85:1 › لا أسرار ولا مفاتيح في أي ملف يُخدم للمتصفح
-  [desktop-chromium] › smoke.spec.js:110:3 › الحارس المحمي وهيكل الدور › الصفحة المحمية تحمل data-requires-auth وتُرفض بلا جلسة
-  [desktop-chromium] › smoke.spec.js:124:3 › الحارس المحمي وهيكل الدور › لا يُبنى شريط جانبي لزائر بلا جلسة
-  [desktop-chromium] › smoke.spec.js:130:3 › الحارس المحمي وهيكل الدور › بعد اجتياز الحارس: الشريط الجانبي والحالة الفارغة يظهران
-  [desktop-chromium] › smoke.spec.js:158:3 › الحارس المحمي وهيكل الدور › إعداد غير صالح يظهر تنبيهًا مرئيًا (showToast مستخدم فعلًا)
-  [mobile-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html
-  [mobile-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html
-  [mobile-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html
-  [mobile-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html
-  [mobile-chromium] › smoke.spec.js:21:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/shared/app-shell.html
-  [mobile-chromium] › smoke.spec.js:33:1 › الاتجاه واللغة عربيان
-  [mobile-chromium] › smoke.spec.js:39:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج)
-  [mobile-chromium] › smoke.spec.js:46:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا
-  [mobile-chromium] › smoke.spec.js:53:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق
-  [mobile-chromium] › smoke.spec.js:61:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة
-  [mobile-chromium] › smoke.spec.js:69:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود
-  [mobile-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /index.html
-  [mobile-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /pages/health.html
-  [mobile-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html
-  [mobile-chromium] › smoke.spec.js:76:5 › التجاوب › لا تمرير أفقي: /pages/shared/app-shell.html
-  [mobile-chromium] › smoke.spec.js:85:1 › لا أسرار ولا مفاتيح في أي ملف يُخدم للمتصفح
-  [mobile-chromium] › smoke.spec.js:110:3 › الحارس المحمي وهيكل الدور › الصفحة المحمية تحمل data-requires-auth وتُرفض بلا جلسة
-  [mobile-chromium] › smoke.spec.js:124:3 › الحارس المحمي وهيكل الدور › لا يُبنى شريط جانبي لزائر بلا جلسة
-  [mobile-chromium] › smoke.spec.js:130:3 › الحارس المحمي وهيكل الدور › بعد اجتياز الحارس: الشريط الجانبي والحالة الفارغة يظهران
-  [mobile-chromium] › smoke.spec.js:158:3 › الحارس المحمي وهيكل الدور › إعداد غير صالح يظهر تنبيهًا مرئيًا (showToast مستخدم فعلًا)
-Total: 40 tests in 1 file
+  [desktop-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html
+  [desktop-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html
+  [desktop-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html
+  [desktop-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html
+  [desktop-chromium] › smoke.spec.js:32:1 › الاتجاه واللغة عربيان
+  [desktop-chromium] › smoke.spec.js:38:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج)
+  [desktop-chromium] › smoke.spec.js:45:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا
+  [desktop-chromium] › smoke.spec.js:52:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق
+  [desktop-chromium] › smoke.spec.js:60:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة
+  [desktop-chromium] › smoke.spec.js:68:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود
+  [desktop-chromium] › smoke.spec.js:75:5 › التجاوب › لا تمرير أفقي: /index.html
+  [desktop-chromium] › smoke.spec.js:75:5 › التجاوب › لا تمرير أفقي: /pages/health.html
+  [desktop-chromium] › smoke.spec.js:75:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html
+  [desktop-chromium] › smoke.spec.js:84:1 › لا أسرار ولا مفاتيح في أي ملف يُخدم للمتصفح
+  [desktop-chromium] › smoke.spec.js:109:3 › الحارس المحمي وهيكل الدور › الصفحة المحمية تحمل data-requires-auth وتُرفض بلا جلسة
+  [desktop-chromium] › smoke.spec.js:123:3 › الحارس المحمي وهيكل الدور › لا يُبنى شريط جانبي لزائر بلا جلسة
+  [desktop-chromium] › smoke.spec.js:129:3 › الحارس المحمي وهيكل الدور › بعد اجتياز الحارس: الشريط الجانبي والحالة الفارغة يظهران
+  [desktop-chromium] › smoke.spec.js:166:3 › الحارس المحمي وهيكل الدور › إعداد غير صالح يظهر تنبيهًا مرئيًا (showToast مستخدم فعلًا)
+  [mobile-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html
+  [mobile-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html
+  [mobile-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html
+  [mobile-chromium] › smoke.spec.js:20:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html
+  [mobile-chromium] › smoke.spec.js:32:1 › الاتجاه واللغة عربيان
+  [mobile-chromium] › smoke.spec.js:38:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج)
+  [mobile-chromium] › smoke.spec.js:45:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا
+  [mobile-chromium] › smoke.spec.js:52:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق
+  [mobile-chromium] › smoke.spec.js:60:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة
+  [mobile-chromium] › smoke.spec.js:68:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود
+  [mobile-chromium] › smoke.spec.js:75:5 › التجاوب › لا تمرير أفقي: /index.html
+  [mobile-chromium] › smoke.spec.js:75:5 › التجاوب › لا تمرير أفقي: /pages/health.html
+  [mobile-chromium] › smoke.spec.js:75:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html
+  [mobile-chromium] › smoke.spec.js:84:1 › لا أسرار ولا مفاتيح في أي ملف يُخدم للمتصفح
+  [mobile-chromium] › smoke.spec.js:109:3 › الحارس المحمي وهيكل الدور › الصفحة المحمية تحمل data-requires-auth وتُرفض بلا جلسة
+  [mobile-chromium] › smoke.spec.js:123:3 › الحارس المحمي وهيكل الدور › لا يُبنى شريط جانبي لزائر بلا جلسة
+  [mobile-chromium] › smoke.spec.js:129:3 › الحارس المحمي وهيكل الدور › بعد اجتياز الحارس: الشريط الجانبي والحالة الفارغة يظهران
+  [mobile-chromium] › smoke.spec.js:166:3 › الحارس المحمي وهيكل الدور › إعداد غير صالح يظهر تنبيهًا مرئيًا (showToast مستخدم فعلًا)
+Total: 36 tests in 1 file
 list exit=0
