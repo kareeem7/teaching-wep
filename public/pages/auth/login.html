@@ -3,16 +3,16 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="صفحة الدخول — شكلية في المرحلة ٠١، تُفعَّل في المرحلة ٠٢.">
+  <meta name="description" content="تسجيل الدخول — هاتف أو كود طالب مع كلمة مرور، عبر دالة مصادقة على الخادم.">
   <meta name="theme-color" content="#0b3b5a">
-  <meta name="app-version" content="0.1.0">
+  <meta name="app-version" content="0.2.0">
   <meta name="minhaj-supabase-url" content="">
   <meta name="minhaj-supabase-key" content="">
   <title>مِنهاج — الدخول</title>
   <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
   <link rel="stylesheet" href="../../assets/css/app.css">
 </head>
-<body data-page-depth="nested">
+<body data-page-depth="nested" data-page="login">
   <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
   <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
 
@@ -22,34 +22,39 @@
     <section class="card-mh card-mh--narrow-sm">
       <h1>تسجيل الدخول</h1>
 
-      <div class="alert alert-warning" role="status">
-        <strong>هذه الصفحة شكلية.</strong>
-        تسجيل الدخول الحقيقي يُبنى في المرحلة ٠٢ (هاتف + كلمة مرور).
-        لا توجد بيانات دخول صالحة، ولا تُرسل أي معلومة تكتبها هنا إلى أي مكان.
+      <div class="alert alert-warning" role="status" data-backend-notice>
+        <strong>تنبيه صادق:</strong>
+        واجهة الدخول مبنية بالفعل، لكن خدمة المصادقة لم تُنشر بعد على هذا الموقع.
+        إن أرسلت البيانات الآن ستظهر لك رسالة صريحة بأن الخادم غير متاح — لا نجاح وهمي.
       </div>
 
       <p class="text-muted-mh" data-login-notice hidden></p>
 
-      <form novalidate aria-describedby="login-help">
+      <form data-form="login" novalidate>
         <div class="field">
-          <label class="field__label" for="identifier">رقم الهاتف</label>
-          <input class="field__control" id="identifier" name="identifier" type="tel"
-                 inputmode="tel" autocomplete="username" placeholder="+20…" disabled>
-          <p class="field__hint">لن يصل رمز SMS: تأكيد الهاتف يتم على الخادم عند الإنشاء.</p>
+          <label class="field__label" for="identifier">رقم الهاتف أو كود الطالب</label>
+          <input class="field__control" id="identifier" name="identifier" type="text"
+                 inputmode="text" autocomplete="username" placeholder="0101… أو MH123456" required>
+          <p class="field__hint">الهاتف يُكتب كما هو أو بصيغة دولية. الكود يبدأ بحرفين و٦ أرقام.</p>
         </div>
 
         <div class="field">
           <label class="field__label" for="password">كلمة المرور</label>
           <input class="field__control" id="password" name="password" type="password"
-                 autocomplete="current-password" disabled>
-          <p class="field__hint">كلمة المرور لا تُخزَّن هنا ولا تظهر للمدرس أو الإدارة.</p>
+                 autocomplete="current-password" required>
+          <p class="field__hint">لا تُخزَّن كلمة المرور في المتصفح، ولا يراها المدرس ولا الإدارة.</p>
         </div>
 
-        <button class="btn-mh" type="submit" disabled>دخول</button>
-        <p class="field__hint" id="login-help">
-          الزر معطّل عن قصد: لا مصادقة في هذه المرحلة. المستخدم لا يستطيع تجاوز ما لا يوجد.
-        </p>
+        <p class="text-danger-mh" data-form-error role="alert" hidden></p>
+
+        <button class="btn-mh btn-mh--block" type="submit" data-action="login">دخول</button>
       </form>
+
+      <ul class="stack-2 mt-4 mb-0 text-muted-mh">
+        <li>لم تصلك دعوة؟ المدرسون يُدعَون من الإدارة فقط، والتسجيل العام مغلق.</li>
+        <li>نسيت كلمة المرور؟ <a href="request-recovery.html">اطلب استعادة من مدرسك</a>.</li>
+        <li>لديك رمز دعوة؟ <a href="accept-invitation.html">افتح صفحة التفعيل</a>.</li>
+      </ul>
 
       <p class="mt-4 mb-0">
         <a href="../../index.html">العودة للرئيسية</a>
@@ -58,7 +63,7 @@
   </main>
 
   <footer class="app-footer">
-    مِنهاج · الإصدار 0.1.0 · <span class="tnum" data-current-year></span>
+    مِنهاج · الإصدار 0.2.0 · <span class="tnum" data-current-year></span>
   </footer>
 
   <script src="../../assets/vendor/supabase/supabase.umd.js"></script>

@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="تفعيل الدعوة — المرحلة ٠٢: الهوية والصلاحيات.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.2.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — تفعيل الدعوة</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="accept-invitation">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <main id="main" class="app-content">
+    <section class="card-mh card-mh--narrow-sm">
+      <h1>تفعيل الدعوة</h1>
+
+      <div class="alert alert-warning" role="status">
+        <strong>دعوة واحدة، استخدام واحد، وصلاحية محدودة.</strong>
+        الرمز يُقرأ من الرابط ولا يُخزَّن في المتصفح. لو كان الرمز مستخدمًا أو منتهيًا سيُرفض هنا وفي الخادم.
+      </div>
+
+      <p class="text-muted-mh" data-invite-status hidden></p>
+
+      <form data-form="accept-invitation" novalidate>
+        <div class="field">
+          <label class="field__label" for="full_name">الاسم</label>
+          <input class="field__control" id="full_name" name="full_name" type="text" autocomplete="name" required>
+          <p class="field__hint">هذا الاسم يظهر لك وللإدارة، ويُخزَّن في ملفك فقط.</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="identifier">رقم الهاتف أو الكود</label>
+          <input class="field__control" id="identifier" name="identifier" type="text" autocomplete="username" required>
+          <p class="field__hint">المدرسون: يُفضَّل رقم الهاتف. الطلاب بلا رقم مستقل: كود بصيغة MH123456.</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="password">كلمة المرور</label>
+          <input class="field__control" id="password" name="password" type="password" autocomplete="new-password" required
+                 minlength="10">
+          <p class="field__hint">١٠ محارف على الأقل، مع حروف وأرقام. تُرفض الكلمات الشائعة على الخادم.</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="password_confirm">تأكيد كلمة المرور</label>
+          <input class="field__control" id="password_confirm" name="password_confirm" type="password"
+                 autocomplete="new-password" required minlength="10">
+        </div>
+
+        <p class="text-danger-mh" data-form-error role="alert" hidden></p>
+
+        <button class="btn-mh btn-mh--block" type="submit" data-action="accept-invitation">تفعيل الحساب</button>
+      </form>
+
+      <p class="mt-4 mb-0"><a href="login.html">لدي حساب بالفعل — الدخول</a></p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    مِنهاج · الإصدار 0.2.0 · <span class="tnum" data-current-year></span>
+  </footer>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

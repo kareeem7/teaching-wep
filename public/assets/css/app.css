@@ -497,3 +497,44 @@ textarea:focus-visible,
     font-size: 1.5rem;
   }
 }
+
+/* ---------- ١٢) حالات النماذج والمصادقة (المرحلة ٠٢) ---------- */
+
+.btn-mh--block {
+  width: 100%;
+}
+
+.text-danger-mh {
+  margin: var(--mh-space-2) 0;
+  font-size: 0.875rem;
+  color: var(--mh-danger);
+}
+
+.text-success-mh {
+  margin: var(--mh-space-2) 0;
+  font-size: 0.875rem;
+  color: var(--mh-ok);
+}
+
+.auth-status {
+  min-height: 1.5rem;
+}
+
+.workspace-list {
+  display: grid;
+  gap: var(--mh-space-2);
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.workspace-list__item {
+  display: flex;
+  gap: var(--mh-space-2);
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--mh-space-3);
+  background-color: var(--mh-paper);
+  border: 1px solid var(--mh-border);
+  border-radius: var(--mh-radius-card);
+}
