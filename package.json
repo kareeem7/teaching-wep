@@ -1,0 +1,33 @@
+{
+  "name": "minhaj-platform",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "منصة مِنهاج — إدارة المدرسين والطلاب والامتحانات (المرحلة ٠١: التأسيس)",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "serve": "python3 -m http.server 4173 --bind 0.0.0.0 --directory public",
+    "lint:js": "eslint .",
+    "lint:css": "stylelint \"public/assets/css/**/*.css\"",
+    "lint:html": "htmlhint \"public/**/*.html\"",
+    "lint": "npm run lint:js && npm run lint:css && npm run lint:html",
+    "test:unit": "node --test",
+    "test:e2e": "playwright test",
+    "check": "npm run lint && npm run test:unit"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.119.0",
+    "bootstrap": "^5.3.8"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@playwright/test": "^1.64.1",
+    "eslint": "^10.14.0",
+    "globals": "^17.14.0",
+    "htmlhint": "^1.9.2",
+    "stylelint": "^18.0.0",
+    "stylelint-config-standard": "^41.0.0"
+  }
+}

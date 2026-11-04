@@ -1,0 +1,18 @@
+{
+  "extends": [
+    "stylelint-config-standard"
+  ],
+  "ignoreFiles": [
+    "public/assets/vendor/**/*.css"
+  ],
+  "rules": {
+    "custom-property-pattern": "^[a-z0-9-]+$",
+    "selector-class-pattern": "^[a-z][a-z0-9-]*(__[a-z0-9-]+)?(--[a-z0-9-]+)?$",
+    "no-descending-specificity": null,
+    "comment-empty-line-before": null,
+    "declaration-empty-line-before": null,
+    "media-feature-range-notation": null,
+    "selector-not-notation": null,
+    "custom-property-empty-line-before": null
+  }
+}

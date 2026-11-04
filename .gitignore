@@ -1,0 +1,15 @@
+# تبعيات
+node_modules/
+# أسرار وبيئة محلية
+.env
+.env.local
+.env.*.local
+# مخرجات اختبارات المتصفح
+test-results/
+playwright-report/
+.playwright/
+blob-report/
+# نظام التشغيل والمحرر
+.DS_Store
+Thumbs.db
+*.log

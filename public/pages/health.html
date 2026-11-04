@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="صفحة صحة النظام — فحوص تُنفَّذ في المتصفح.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.1.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — صحة النظام</title>
+  <link rel="stylesheet" href="../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../assets/css/app.css">
+</head>
+<body data-page-depth="nested">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <main id="main" class="app-content">
+    <h1>صحة النظام</h1>
+    <p class="text-muted-mh">
+      هذه الفحوص <strong>تُنفَّذ فعلًا في متصفحك</strong> عند فتح الصفحة، وليست نصًا ثابتًا.
+      البند الذي لا ينطبق على هذه المرحلة يظهر «غير منطبق» ولا يُحسب نجاحًا.
+    </p>
+
+    <section class="card-mh mt-4">
+      <h2 class="card-mh__title">الفحوص</h2>
+      <div id="health-checks" class="table-responsive">
+        <p class="text-muted-mh mb-0">جارٍ التنفيذ…</p>
+      </div>
+    </section>
+
+    <section class="card-mh">
+      <h2 class="card-mh__title">حدود هذه الصفحة</h2>
+      <ul class="stack-2 mb-0">
+        <li>لا تختبر قاعدة البيانات: لا يوجد مشروع Supabase في هذه المرحلة (BLOCKED حتى إذن مستقل).</li>
+        <li>لا تختبر المصادقة: تُستخدم في المرحلة ٠٢.</li>
+        <li>لا تُظهر أي مفتاح أو سرّ — حالة الإعداد تُعرض كنص فقط.</li>
+      </ul>
+      <p class="mt-3 mb-0"><a class="btn-mh btn-mh--ghost" href="../index.html">العودة للرئيسية</a></p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    مِنهاج · الإصدار 0.1.0 · <span class="tnum" data-current-year></span>
+  </footer>
+
+  <script src="../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../assets/js/app.js"></script>
+</body>
+</html>
