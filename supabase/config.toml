@@ -1,0 +1,54 @@
+# إعدادات Supabase المحلية — مرجع للتشغيل على أجهزة المطورين.
+# لا تُشغّل هذه الإعدادات المشروع السحابي؛ السحابي يُدار بالمهاجرات في supabase/migrations.
+project_id = "teaching-wep"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public"]
+extra_search_path = ["public", "app", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+shadow_port = 54320
+major_version = 17
+
+[db.pooler]
+enabled = false
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "25MiB"
+
+[auth]
+enabled = true
+site_url = "http://localhost:4173"
+additional_redirect_urls = ["http://localhost:4173", "https://127.0.0.1:4173"]
+jwt_expiry = 3600
+enable_signup = true
+enable_confirmations = false
+minimum_password_length = 10
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+
+[auth.sms]
+enable_signup = false
+
+[edge_runtime]
+enabled = true
+policy = "per_worker"
+
+[analytics]
+enabled = false
