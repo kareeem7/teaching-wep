@@ -1,0 +1,440 @@
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:03] "GET /index.html HTTP/1.1" 200 -
+
+Running 28 tests using 1 worker
+
+  ✘   1 [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html (3ms)
+  ✘   2 [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html (2ms)
+  ✘   3 [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html (3ms)
+  ✘   4 [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html (2ms)
+  ✘   5 [desktop-chromium] › tests/e2e/smoke.spec.js:30:1 › الاتجاه واللغة عربيان (2ms)
+  ✘   6 [desktop-chromium] › tests/e2e/smoke.spec.js:36:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج) (2ms)
+  ✘   7 [desktop-chromium] › tests/e2e/smoke.spec.js:43:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا (2ms)
+  ✘   8 [desktop-chromium] › tests/e2e/smoke.spec.js:50:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق (2ms)
+  ✘   9 [desktop-chromium] › tests/e2e/smoke.spec.js:58:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة (2ms)
+  ✘  10 [desktop-chromium] › tests/e2e/smoke.spec.js:66:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود (2ms)
+  ✘  11 [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /index.html (2ms)
+  ✘  12 [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/health.html (1ms)
+  ✘  13 [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html (2ms)
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:08] "GET /index.html HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:08] "GET /assets/js/config.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:08] "GET /assets/js/app.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:08] "GET /assets/js/supabase-client.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:08] "GET /assets/js/auth-guard.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:08] "GET /assets/js/ui.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:09] "GET /assets/js/components/navbar.js HTTP/1.1" 200 -
+  ✓  14 [desktop-chromium] › tests/e2e/smoke.spec.js:82:1 › لا أسرار ولا مفاتيح في أي ملف يُخدم للمتصفح (54ms)
+  ✘  15 [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html (2ms)
+  ✘  16 [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html (2ms)
+  ✘  17 [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html (2ms)
+  ✘  18 [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html (2ms)
+  ✘  19 [mobile-chromium] › tests/e2e/smoke.spec.js:30:1 › الاتجاه واللغة عربيان (3ms)
+  ✘  20 [mobile-chromium] › tests/e2e/smoke.spec.js:36:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج) (2ms)
+  ✘  21 [mobile-chromium] › tests/e2e/smoke.spec.js:43:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا (4ms)
+  ✘  22 [mobile-chromium] › tests/e2e/smoke.spec.js:50:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق (2ms)
+  ✘  23 [mobile-chromium] › tests/e2e/smoke.spec.js:58:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة (2ms)
+  ✘  24 [mobile-chromium] › tests/e2e/smoke.spec.js:66:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود (2ms)
+  ✘  25 [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /index.html (2ms)
+  ✘  26 [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/health.html (2ms)
+  ✘  27 [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html (2ms)
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /index.html HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /assets/js/config.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /assets/js/app.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /assets/js/supabase-client.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /assets/js/auth-guard.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /assets/js/ui.js HTTP/1.1" 200 -
+[WebServer] 127.0.0.1 - - [04/Nov/2026 21:45:14] "GET /assets/js/components/navbar.js HTTP/1.1" 200 -
+  ✓  28 [mobile-chromium] › tests/e2e/smoke.spec.js:82:1 › لا أسرار ولا مفاتيح في أي ملف يُخدم للمتصفح (56ms)
+
+
+  1) [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-index-html-desktop-chromium/error-context.md
+
+  2) [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-pages-health-html-desktop-chromium/error-context.md
+
+  3) [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-pages-auth-login-html-desktop-chromium/error-context.md
+
+  4) [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-pages-errors-404-html-desktop-chromium/error-context.md
+
+  5) [desktop-chromium] › tests/e2e/smoke.spec.js:30:1 › الاتجاه واللغة عربيان ─────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الاتجاه-واللغة-عربيان-desktop-chromium/error-context.md
+
+  6) [desktop-chromium] › tests/e2e/smoke.spec.js:36:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج) 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-المكوّنات-تُحقن-فعلًا-شريط-علوي-هوية-مِنهاج--desktop-chromium/error-context.md
+
+  7) [desktop-chromium] › tests/e2e/smoke.spec.js:43:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا ─
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-حالة-الإعداد-تُعرض-بصدق-ولا-تدّعي-اتصالًا-desktop-chromium/error-context.md
+
+  8) [desktop-chromium] › tests/e2e/smoke.spec.js:50:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-صفحة-الصحة-تنفّذ-الفحوص-وتعرض-«غير-منطبق»-لما-لا-ينطبق-desktop-chromium/error-context.md
+
+  9) [desktop-chromium] › tests/e2e/smoke.spec.js:58:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة ─
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-صفحة-الدخول-شكلية-كل-الحقول-والزر-معطّلة-desktop-chromium/error-context.md
+
+  10) [desktop-chromium] › tests/e2e/smoke.spec.js:66:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود ──
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-صفحة-404-تعطي-مخرجًا-بدل-الطريق-المسدود-desktop-chromium/error-context.md
+
+  11) [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /index.html ─────
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-التجاوب-لا-تمرير-أفقي-index-html-desktop-chromium/error-context.md
+
+  12) [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/health.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-التجاوب-لا-تمرير-أفقي-pages-health-html-desktop-chromium/error-context.md
+
+  13) [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-التجاوب-لا-تمرير-أفقي-pages-auth-login-html-desktop-chromium/error-context.md
+
+  14) [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-index-html-mobile-chromium/error-context.md
+
+  15) [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-pages-health-html-mobile-chromium/error-context.md
+
+  16) [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-pages-auth-login-html-mobile-chromium/error-context.md
+
+  17) [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الصفحات-الأساسية-تفتح-بلا-أخطاء-pages-errors-404-html-mobile-chromium/error-context.md
+
+  18) [mobile-chromium] › tests/e2e/smoke.spec.js:30:1 › الاتجاه واللغة عربيان ─────────────────────
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-الاتجاه-واللغة-عربيان-mobile-chromium/error-context.md
+
+  19) [mobile-chromium] › tests/e2e/smoke.spec.js:36:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج) 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-المكوّنات-تُحقن-فعلًا-شريط-علوي-هوية-مِنهاج--mobile-chromium/error-context.md
+
+  20) [mobile-chromium] › tests/e2e/smoke.spec.js:43:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا ─
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-حالة-الإعداد-تُعرض-بصدق-ولا-تدّعي-اتصالًا-mobile-chromium/error-context.md
+
+  21) [mobile-chromium] › tests/e2e/smoke.spec.js:50:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-صفحة-الصحة-تنفّذ-الفحوص-وتعرض-«غير-منطبق»-لما-لا-ينطبق-mobile-chromium/error-context.md
+
+  22) [mobile-chromium] › tests/e2e/smoke.spec.js:58:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة ─
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-صفحة-الدخول-شكلية-كل-الحقول-والزر-معطّلة-mobile-chromium/error-context.md
+
+  23) [mobile-chromium] › tests/e2e/smoke.spec.js:66:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود ───
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-صفحة-404-تعطي-مخرجًا-بدل-الطريق-المسدود-mobile-chromium/error-context.md
+
+  24) [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /index.html ──────
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-التجاوب-لا-تمرير-أفقي-index-html-mobile-chromium/error-context.md
+
+  25) [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/health.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-التجاوب-لا-تمرير-أفقي-pages-health-html-mobile-chromium/error-context.md
+
+  26) [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html 
+
+    Error: browserType.launch: Executable doesn't exist at /home/user/.cache/ms-playwright/chromium_headless_shell-1248/chrome-headless-shell-linux64/chrome-headless-shell
+    ╔════════════════════════════════════════════════════════════╗
+    ║ Looks like Playwright was just installed or updated.       ║
+    ║ Please run the following command to download new browsers: ║
+    ║                                                            ║
+    ║     npx playwright install                                 ║
+    ║                                                            ║
+    ║ <3 Playwright Team                                         ║
+    ╚════════════════════════════════════════════════════════════╝
+
+    Error Context: test-results/smoke-التجاوب-لا-تمرير-أفقي-pages-auth-login-html-mobile-chromium/error-context.md
+
+  26 failed
+    [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:30:1 › الاتجاه واللغة عربيان ──────────────────────
+    [desktop-chromium] › tests/e2e/smoke.spec.js:36:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج) 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:43:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا ──
+    [desktop-chromium] › tests/e2e/smoke.spec.js:50:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:58:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة ──
+    [desktop-chromium] › tests/e2e/smoke.spec.js:66:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود ────
+    [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /index.html ───────
+    [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/health.html 
+    [desktop-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /index.html 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/health.html 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/auth/login.html 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:18:5 › الصفحات الأساسية › تفتح بلا أخطاء: /pages/errors/404.html 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:30:1 › الاتجاه واللغة عربيان ───────────────────────
+    [mobile-chromium] › tests/e2e/smoke.spec.js:36:1 › المكوّنات تُحقن فعلًا (شريط علوي + هوية مِنهاج) 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:43:1 › حالة الإعداد تُعرض بصدق ولا تدّعي اتصالًا ───
+    [mobile-chromium] › tests/e2e/smoke.spec.js:50:1 › صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق» لما لا ينطبق 
+    [mobile-chromium] › tests/e2e/smoke.spec.js:58:1 › صفحة الدخول شكلية: كل الحقول والزر معطّلة ───
+    [mobile-chromium] › tests/e2e/smoke.spec.js:66:1 › صفحة 404 تعطي مخرجًا بدل الطريق المسدود ─────
+    [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /index.html ────────
+    [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/health.html ─
+    [mobile-chromium] › tests/e2e/smoke.spec.js:73:5 › التجاوب › لا تمرير أفقي: /pages/auth/login.html 
+  2 passed (11.4s)

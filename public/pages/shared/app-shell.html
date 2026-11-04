@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="تخطيط محمي فارغ — يرفض الزائر قبل الدخول، ولا يحتوي أي بيانات.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.1.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — مساحة العمل (نموذج محمي)</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-requires-auth="true" data-role-label="مساحة العمل (نموذج)">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <div class="app-shell">
+    <div data-component="sidebar"></div>
+
+    <div class="app-main">
+      <main id="main" class="app-content">
+        <h1>مساحة العمل</h1>
+
+        <div class="alert alert-warning" role="status">
+          <strong>تخطيط محمي فارغ.</strong>
+          الوصول إلى هذه الصفحة يتطلب جلسة دخول؛ وبدونها يحوّلك النظام إلى صفحة الدخول.
+          لا تحتوي الصفحة أي بيانات، ولا أزرارًا تدّعي وظائف غير موجودة.
+          صفحات الأدوار الحقيقية تُبنى في المرحلتين ٠٣ و٠٤.
+        </div>
+
+        <section class="card-mh mt-4">
+          <h2 class="card-mh__title">البيانات</h2>
+          <div data-empty-host></div>
+        </section>
+
+        <section class="card-mh">
+          <h2 class="card-mh__title">حدود هذه المرحلة</h2>
+          <ul class="stack-2 mb-0">
+            <li>لا مصادقة حقيقية: الحارس هنا تجربة استخدام فقط، والحماية الفعلية RLS في المرحلة ٠٢.</li>
+            <li>لا جداول ولا طلاب ولا مجموعات.</li>
+            <li>لا صلاحيات أدوار مطبقة بعد: الشريط الجانبي يعرض عنصرًا واحدًا فقط.</li>
+          </ul>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        مِنهاج · الإصدار 0.1.0 · <span class="tnum" data-current-year></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

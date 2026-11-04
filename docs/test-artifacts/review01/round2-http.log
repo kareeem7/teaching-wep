@@ -1,0 +1,10 @@
+/                                      200
+/index.html                            200
+/pages/health.html                     200
+/pages/auth/login.html                 200
+/pages/shared/app-shell.html           200
+/pages/errors/403.html                 200
+/pages/errors/404.html                 200
+/pages/errors/500.html                 200
+/assets/js/app.js                      200
+/assets/js/components/sidebar.js       200

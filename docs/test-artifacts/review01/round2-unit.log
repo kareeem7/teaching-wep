@@ -1,0 +1,161 @@
+TAP version 13
+# Subtest: إعداد فارغ: غير مهيأ لكنه ليس خطأ
+ok 1 - إعداد فارغ: غير مهيأ لكنه ليس خطأ
+  ---
+  duration_ms: 0.860002
+  type: 'test'
+  ...
+# Subtest: عنوان صالح + مفتاح anon = إعداد مكتمل
+ok 2 - عنوان صالح + مفتاح anon = إعداد مكتمل
+  ---
+  duration_ms: 0.884729
+  type: 'test'
+  ...
+# Subtest: مفتاح service_role مرفوض دائمًا
+ok 3 - مفتاح service_role مرفوض دائمًا
+  ---
+  duration_ms: 0.251729
+  type: 'test'
+  ...
+# Subtest: مفتاح sb_secret_ مرفوض دائمًا
+ok 4 - مفتاح sb_secret_ مرفوض دائمًا
+  ---
+  duration_ms: 0.109765
+  type: 'test'
+  ...
+# Subtest: مفتاح publishable الجديد مقبول
+ok 5 - مفتاح publishable الجديد مقبول
+  ---
+  duration_ms: 0.210886
+  type: 'test'
+  ...
+# Subtest: عنوان بلا https مرفوض
+ok 6 - عنوان بلا https مرفوض
+  ---
+  duration_ms: 0.085445
+  type: 'test'
+  ...
+# Subtest: عنوان بمسار أو استعلام مرفوض
+ok 7 - عنوان بمسار أو استعلام مرفوض
+  ---
+  duration_ms: 0.122176
+  type: 'test'
+  ...
+# Subtest: نطاق غير تابع لـSupabase مرفوض
+ok 8 - نطاق غير تابع لـSupabase مرفوض
+  ---
+  duration_ms: 0.136308
+  type: 'test'
+  ...
+# Subtest: عنوان بلا مفتاح يُعد ناقصًا
+ok 9 - عنوان بلا مفتاح يُعد ناقصًا
+  ---
+  duration_ms: 0.225281
+  type: 'test'
+  ...
+# Subtest: مفتاح غير JWT وغير publishable مرفوض
+ok 10 - مفتاح غير JWT وغير publishable مرفوض
+  ---
+  duration_ms: 0.352339
+  type: 'test'
+  ...
+# Subtest: مفتاح بدور غير anon مرفوض
+ok 11 - مفتاح بدور غير anon مرفوض
+  ---
+  duration_ms: 0.275051
+  type: 'test'
+  ...
+# Subtest: decodeJwtClaims ينفع على القيم غير الصالحة دون رمي استثناء
+ok 12 - decodeJwtClaims ينفع على القيم غير الصالحة دون رمي استثناء
+  ---
+  duration_ms: 0.079166
+  type: 'test'
+  ...
+# Subtest: isForbiddenKey صحيح مع القيم الفارغة
+ok 13 - isForbiddenKey صحيح مع القيم الفارغة
+  ---
+  duration_ms: 0.052063
+  type: 'test'
+  ...
+# Subtest: readMetaConfig يُرجع قيمًا فارغة بلا DOM
+ok 14 - readMetaConfig يُرجع قيمًا فارغة بلا DOM
+  ---
+  duration_ms: 0.14583
+  type: 'test'
+  ...
+# Subtest: escapeHtml يهرب الوسوم والاقتباسات
+ok 15 - escapeHtml يهرب الوسوم والاقتباسات
+  ---
+  duration_ms: 0.065778
+  type: 'test'
+  ...
+# Subtest: formatDateTime يستخدم المنطقة الزمنية المعتمدة ويتعامل مع تاريخ غير صالح
+ok 16 - formatDateTime يستخدم المنطقة الزمنية المعتمدة ويتعامل مع تاريخ غير صالح
+  ---
+  duration_ms: 10.37941
+  type: 'test'
+  ...
+# Subtest: formatPercent يقرّب ويحمي من القسمة على صفر
+ok 17 - formatPercent يقرّب ويحمي من القسمة على صفر
+  ---
+  duration_ms: 0.09593
+  type: 'test'
+  ...
+# Subtest: isPlausiblePhone يتحقق شكليًا فقط
+ok 18 - isPlausiblePhone يتحقق شكليًا فقط
+  ---
+  duration_ms: 0.135232
+  type: 'test'
+  ...
+# Subtest: H-01: الصفحة المحمية تحمل data-requires-auth="true"
+ok 19 - H-01: الصفحة المحمية تحمل data-requires-auth="true"
+  ---
+  duration_ms: 75.942261
+  type: 'test'
+  ...
+# Subtest: H-02: الصفحة تحمل data-role-label ونقطة تركيب الشريط الجانبي
+ok 20 - H-02: الصفحة تحمل data-role-label ونقطة تركيب الشريط الجانبي
+  ---
+  duration_ms: 16.369531
+  type: 'test'
+  ...
+# Subtest: H-02: renderSidebar يبني الهيكل الفعلي بعد اجتياز الحارس
+ok 21 - H-02: renderSidebar يبني الهيكل الفعلي بعد اجتياز الحارس
+  ---
+  duration_ms: 23.995797
+  type: 'test'
+  ...
+# Subtest: H-02: الحالة الفارغة تُحقن في نقطة التركيب بصدق
+ok 22 - H-02: الحالة الفارغة تُحقن في نقطة التركيب بصدق
+  ---
+  duration_ms: 11.542965
+  type: 'test'
+  ...
+# Subtest: M-01: showToast له مسار تنفيذ حقيقي
+ok 23 - M-01: showToast له مسار تنفيذ حقيقي
+  ---
+  duration_ms: 15.447719
+  type: 'test'
+  ...
+# Subtest: الحارس: الزائر بلا إعداد مصادقة يُرفض مع سبب unconfigured
+ok 24 - الحارس: الزائر بلا إعداد مصادقة يُرفض مع سبب unconfigured
+  ---
+  duration_ms: 11.384233
+  type: 'test'
+  ...
+# Subtest: الحارس: جلسة مُحاكاة تسمح بالمرور
+ok 25 - الحارس: جلسة مُحاكاة تسمح بالمرور
+  ---
+  duration_ms: 10.288058
+  type: 'test'
+  ...
+1..25
+# tests 25
+# suites 0
+# pass 25
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 657.430331
+unit exit=0

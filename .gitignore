@@ -13,3 +13,6 @@ blob-report/
 .DS_Store
 Thumbs.db
 *.log
+
+# سجلات أدلة الفحص تُحفظ عمدًا (نص صغير) — بقية ملفات .log مستثناة
+!docs/test-artifacts/**/*.log

@@ -1,0 +1,26 @@
+# نسخة الفحص: f75c76a2f16addaf8fd0f01f7b5b5eac63ff078b (main بعد دمج PR #5)
+# التاريخ (UTC): 2026-11-04T21:45:28Z
+# مساحة معزولة: git clone → /tmp/verify ثم npm ci
+
+## نتيجة npm ci:
+exit=0 (تثبيت نظيف بلا تعديلات يدوية)
+
+## صفحات على الخادم الثابت (منفذ 4174):
+/                              200
+/index.html                    200
+/pages/health.html             200
+/pages/auth/login.html         200
+/pages/errors/403.html         200
+/pages/errors/404.html         200
+/pages/errors/500.html         200
+
+## صفحات محمية (data-requires-auth):
+$ grep -rl data-requires-auth public/
+public/assets/js/auth-guard.js
+
+## تخطيطات أدوار (data-role-label):
+(لا يوجد أي استخدام)
+
+## دوال بلا استخدام:
+renderEmptyState: 0 استخدام
+showToast: 0 استخدام

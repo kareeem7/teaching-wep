@@ -1,0 +1,118 @@
+TAP version 13
+# Subtest: إعداد فارغ: غير مهيأ لكنه ليس خطأ
+ok 1 - إعداد فارغ: غير مهيأ لكنه ليس خطأ
+  ---
+  duration_ms: 1.466422
+  type: 'test'
+  ...
+# Subtest: عنوان صالح + مفتاح anon = إعداد مكتمل
+ok 2 - عنوان صالح + مفتاح anon = إعداد مكتمل
+  ---
+  duration_ms: 0.846273
+  type: 'test'
+  ...
+# Subtest: مفتاح service_role مرفوض دائمًا
+ok 3 - مفتاح service_role مرفوض دائمًا
+  ---
+  duration_ms: 0.25077
+  type: 'test'
+  ...
+# Subtest: مفتاح sb_secret_ مرفوض دائمًا
+ok 4 - مفتاح sb_secret_ مرفوض دائمًا
+  ---
+  duration_ms: 0.167555
+  type: 'test'
+  ...
+# Subtest: مفتاح publishable الجديد مقبول
+ok 5 - مفتاح publishable الجديد مقبول
+  ---
+  duration_ms: 0.148925
+  type: 'test'
+  ...
+# Subtest: عنوان بلا https مرفوض
+ok 6 - عنوان بلا https مرفوض
+  ---
+  duration_ms: 0.072413
+  type: 'test'
+  ...
+# Subtest: عنوان بمسار أو استعلام مرفوض
+ok 7 - عنوان بمسار أو استعلام مرفوض
+  ---
+  duration_ms: 0.114816
+  type: 'test'
+  ...
+# Subtest: نطاق غير تابع لـSupabase مرفوض
+ok 8 - نطاق غير تابع لـSupabase مرفوض
+  ---
+  duration_ms: 0.126459
+  type: 'test'
+  ...
+# Subtest: عنوان بلا مفتاح يُعد ناقصًا
+ok 9 - عنوان بلا مفتاح يُعد ناقصًا
+  ---
+  duration_ms: 0.219297
+  type: 'test'
+  ...
+# Subtest: مفتاح غير JWT وغير publishable مرفوض
+ok 10 - مفتاح غير JWT وغير publishable مرفوض
+  ---
+  duration_ms: 0.278096
+  type: 'test'
+  ...
+# Subtest: مفتاح بدور غير anon مرفوض
+ok 11 - مفتاح بدور غير anon مرفوض
+  ---
+  duration_ms: 0.18191
+  type: 'test'
+  ...
+# Subtest: decodeJwtClaims ينفع على القيم غير الصالحة دون رمي استثناء
+ok 12 - decodeJwtClaims ينفع على القيم غير الصالحة دون رمي استثناء
+  ---
+  duration_ms: 0.065161
+  type: 'test'
+  ...
+# Subtest: isForbiddenKey صحيح مع القيم الفارغة
+ok 13 - isForbiddenKey صحيح مع القيم الفارغة
+  ---
+  duration_ms: 0.11733
+  type: 'test'
+  ...
+# Subtest: readMetaConfig يُرجع قيمًا فارغة بلا DOM
+ok 14 - readMetaConfig يُرجع قيمًا فارغة بلا DOM
+  ---
+  duration_ms: 0.153411
+  type: 'test'
+  ...
+# Subtest: escapeHtml يهرب الوسوم والاقتباسات
+ok 15 - escapeHtml يهرب الوسوم والاقتباسات
+  ---
+  duration_ms: 0.10759
+  type: 'test'
+  ...
+# Subtest: formatDateTime يستخدم المنطقة الزمنية المعتمدة ويتعامل مع تاريخ غير صالح
+ok 16 - formatDateTime يستخدم المنطقة الزمنية المعتمدة ويتعامل مع تاريخ غير صالح
+  ---
+  duration_ms: 39.996155
+  type: 'test'
+  ...
+# Subtest: formatPercent يقرّب ويحمي من القسمة على صفر
+ok 17 - formatPercent يقرّب ويحمي من القسمة على صفر
+  ---
+  duration_ms: 0.102718
+  type: 'test'
+  ...
+# Subtest: isPlausiblePhone يتحقق شكليًا فقط
+ok 18 - isPlausiblePhone يتحقق شكليًا فقط
+  ---
+  duration_ms: 0.144841
+  type: 'test'
+  ...
+1..18
+# tests 18
+# suites 0
+# pass 18
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 108.340552
