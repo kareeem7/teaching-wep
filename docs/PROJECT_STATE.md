@@ -15,7 +15,7 @@
 | الرفع | `PUSHED` — فرع `arena/d20954b6-teaching-wep` (بطلب صريح، A-09) |
 | Pull Request | مفتوح إلى `main` (مسودة حتى الفحص المستقل) |
 | مشروع Supabase | **`teaching-wep`** — ref `wdqupfoznngqbyphjnie` · مؤسسة العميل · تطويري بلا نشر (D-310) |
-| قاعدة بيانات / migrations | **مُطبَّقتان**: `0001_extensions` + `0002_platform_meta` — RLS مفعّلة، سياسة قراءة واحدة، صفر جداول أشخاص |
+| قاعدة بيانات / migrations | **ثلاث**: `0001_extensions` + `0001b_platform_meta` + `0006_security_hardening` — RLS مفعّلة، سياسة قراءة واحدة، صفر جداول أشخاص |
 | كود تطبيق | **يوجد** — ٦ صفحات + ١٠ وحدات JS + `app.css` + أصول vendor محلية |
 | اختبارات برمجية مشغّلة | **١٥/١٥ وحدة** · **Playwright نُفِّذ في CI ونجح** (run `41901003822`) · HTTP ٧/٧ |
 
@@ -102,7 +102,7 @@
 | واجهة عربية RTL بمكوّنات حقيقية | ✓ | `public/` |
 | فحص حالة حقيقي (شبكة + Auth health) | ✓ | `public/pages/health.html` |
 | صفحة دخول صريحة التعطيل | ✓ | `public/pages/auth/login.html` |
-| RLS مثبتة على جدول إعدادات | ✓ | `supabase/migrations/0002_platform_meta.sql` |
+| RLS مثبتة على جدول إعدادات | ✓ | `supabase/migrations/0001b_platform_meta.sql` |
 | اختبارات وحدة (منها ٤ DOM حقيقية) | ✓ 15/15 | `tests/unit/` |
 | اختبارات E2E | ⛔ `BLOCKED` — لا متصفح (D-315) | `tests/e2e/smoke.spec.js` |
 | مزامنة الإصدارات (§13) | ✓ مثبَّتة من سجل npm | `SUPABASE_ARCHITECTURE.md` §13 |

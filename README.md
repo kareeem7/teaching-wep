@@ -52,7 +52,7 @@ public/
 supabase/
   config.toml                    إعدادات التشغيل المحلي (مرجع للمطورين)
   migrations/0001_extensions.sql الامتدادات + مخطط app + الدوال المشتركة
-  migrations/0002_platform_meta.sql جدول إعدادات العرض في public مع RLS
+  migrations/0001b_platform_meta.sql جدول إعدادات العرض في public مع RLS
   seed.sql                       بيانات تركيبية فقط
 tests/unit · tests/e2e
 docs/                            الدستور والتقارير والقرارات
@@ -95,7 +95,8 @@ docs/                            الدستور والتقارير والقرا�
 
 - المهاجرات في `supabase/migrations/` وتُطبَّق بالترتيب الرقمي.
 - `0001_extensions.sql`: `pgcrypto` + `citext` + `pg_trgm`، مخطط `app`، دالة `app.set_updated_at()`.
-- `0002_platform_meta.sql`: جدول `public.platform_meta` مع RLS (قراءة عامة، بلا كتابة من المتصفح).
+- `0001b_platform_meta.sql`: جدول `public.platform_meta` مع RLS (قراءة عامة، بلا كتابة من المتصفح).
+  (كانت `0002` وأُعيد ترقيمها بموجب A-13/D-323 لتبقى الأرقام `0002–0005` للمرحلة ٠٢.)
 - `seed.sql` قابل للتكرار (`on conflict`) ويحتوي إعدادات عرض فقط.
 - لا توجد جداول طلاب/مدرّسين/امتحانات في هذه المرحلة — تُبنى في مرحلة المخطط بعد اعتمادها.
 

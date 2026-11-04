@@ -131,7 +131,7 @@ test('هيكل المرحلة ٠١ كامل بلا ملفات فارغة', () =>
     'public/assets/js/components/empty-state.js',
     'supabase/config.toml',
     'supabase/migrations/0001_extensions.sql',
-    'supabase/migrations/0002_platform_meta.sql',
+    'supabase/migrations/0001b_platform_meta.sql',
     'supabase/seed.sql',
     'tests/unit/config.test.js',
     'tests/e2e/smoke.spec.js',

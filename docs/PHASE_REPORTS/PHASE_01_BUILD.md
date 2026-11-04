@@ -42,13 +42,13 @@
 | المهاجرة | الأثر | مُطبَّقة؟ |
 |---|---|---|
 | `0001_extensions.sql` | `pgcrypto` + `citext` + `pg_trgm`، مخطط `app`، `app.set_updated_at()` | ✅ |
-| `0002_platform_meta.sql` | `public.platform_meta` + trigger + RLS + سياسة قراءة عامة + سحب الكتابة | ✅ |
+| `0001b_platform_meta.sql` | `public.platform_meta` + trigger + RLS + سياسة قراءة عامة + سحب الكتابة | ✅ |
 
 تحقق فعلي من قاعدة البيانات:
 
 - `public.platform_meta`: `relrowsecurity = true`، سياسة واحدة (`SELECT` لـ `anon, authenticated`)، **صفر سياسة كتابة**.
 - الصفوف: `default_locale=ar-EG` · `default_timezone=Africa/Cairo` · `phase=1` · `platform_name=مِنهاج`.
-- سجل المهاجرات في `supabase_migrations.schema_migrations`: `0001_extensions` ثم `0002_platform_meta`.
+- سجل المهاجرات في `supabase_migrations.schema_migrations`: `0001_extensions` ثم `0001b_platform_meta` (أُعيد ترقيمها لاحقًا، A-13/D-323).
 - لا جدول طلاب/مدرّسين/امتحانات — مؤجّل عن قصد إلى مرحلة المخطط.
 - `seed.sql` قابل للتكرار (`on conflict`) ولا يحوي شخصًا واحدًا.
 
@@ -80,7 +80,7 @@ public/assets/vendor/bootstrap/bootstrap.bundle.min.js
 public/assets/vendor/supabase/supabase.js        (D-311)
 supabase/config.toml
 supabase/migrations/0001_extensions.sql
-supabase/migrations/0002_platform_meta.sql       (D-312)
+supabase/migrations/0001b_platform_meta.sql      (D-312 · أُعيد ترقيمها A-13/D-323)
 supabase/seed.sql
 tests/unit/config.test.js
 tests/unit/dom.test.js                           (D-312)
@@ -102,7 +102,7 @@ docs/PHASE_REPORTS/PHASE_01_CHECK.md
 
 | الالتزام | كيف نُفِّذ |
 |---|---|
-| أسماء الملفات حرفية | كل الأسماء المطلوبة موجودة كما هي. الإضافات: `0002_platform_meta.sql`، `tests/unit/dom.test.js`، `assets/vendor/supabase/` — موثّقة في D-311/D-312 ومحدَّث بها ملف الهيكل في نفس الـ commit |
+| أسماء الملفات حرفية | كل الأسماء المطلوبة موجودة كما هي. الإضافات: `0001b_platform_meta.sql` (كانت `0002`)، `tests/unit/dom.test.js`، `assets/vendor/supabase/` — موثّقة في D-311/D-312 ومحدَّث بها ملف الهيكل في نفس الـ commit |
 | لا `service_role` في `public/` | اختبار وحدة يمسح كل ملفات `public/` بحثًا عن مادة المفتاح نفسها (لا الكلمة في التعليقات) |
 | الحارس لا يُغني عن RLS | منصوص في `auth-guard.js` و`login.html` و`README` وPR template |
 | منطق الأعمال في الخادم | لا يوجد في هذه المرحلة أي منطق تصحيح/سحب/احتساب — لا في الخادم ولا في المتصفح. لم يُقلَّد شيء |

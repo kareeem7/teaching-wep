@@ -106,7 +106,7 @@
 
 ## ب-٤) التحقق من قاعدة البيانات بعد الإصلاح
 
-- المهاجرات المطبَّقة: `0001_extensions` · `0002_platform_meta` · `0006_security_hardening`.
+- المهاجرات المطبَّقة: `0001_extensions` · `0001b_platform_meta` · `0006_security_hardening`.
 - `app.set_updated_at()` الآن `proconfig = search_path=` (مُحصَّنة).
 - `public.platform_meta`: RLS مفعّلة · سياسة قراءة واحدة · **صفر سياسة كتابة**.
 - `anon` و`authenticated`: قراءة ٤ صفوف · الكتابة مرفوضة `42501`.
