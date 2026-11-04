@@ -1,0 +1,15 @@
+{
+  "extends": [
+    "stylelint-config-standard"
+  ],
+  "ignoreFiles": [
+    "public/assets/vendor/**",
+    "node_modules/**"
+  ],
+  "rules": {
+    "custom-property-pattern": "^[a-z][a-z0-9-]*$",
+    "selector-class-pattern": "^[a-z][a-z0-9-]*(__[a-z0-9-]+)?(--[a-z0-9-]+)?$",
+    "declaration-block-no-redundant-longhand-properties": null,
+    "no-descending-specificity": null
+  }
+}
