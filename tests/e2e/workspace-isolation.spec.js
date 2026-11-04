@@ -14,7 +14,7 @@ import { test, expect } from '@playwright/test';
  *  ۴. الحقول غير المسموح بها في الرد لا تُرسم في الصفحة.
  */
 
-const VALID_URL = 'https://workspaces0test0000.supabase.co';
+const VALID_URL = 'https://e2ewwwwwwwwwwwwwwwww.supabase.co';
 const VALID_KEY = 'sb_publishable_e2e_workspace_key';
 
 /** يجعل إعداد Supabase "صالحًا" ويحقن جلسة مُحاكاة، حتى تعمل الصفحة كأنها مسجّلة. */

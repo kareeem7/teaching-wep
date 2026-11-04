@@ -57,12 +57,14 @@ test('صفحة الصحة تنفّذ الفحوص وتعرض «غير منطبق
   await expect(page.locator('#health-checks')).toContainText('سليم');
 });
 
-test('صفحة الدخول شكلية: كل الحقول والزر معطّلة', async ({ page }) => {
+test('صفحة الدخول مفعّلة بعد المرحلة ٠٢ وتصرّح بأن الخادم غير منشور', async ({ page }) => {
+  // في المرحلة ٠١ كانت الحقول معطّلة عمدًا؛ المرحلة ٠٢ فعّلتها مع رسالة صادقة.
+  // التغيير مقصود ومسجّل في docs/PHASE_REPORTS/PHASE_02_BUILD.md §«فحص تراكمي».
   await page.goto('/pages/auth/login.html');
-  await expect(page.locator('#identifier')).toBeDisabled();
-  await expect(page.locator('#password')).toBeDisabled();
-  await expect(page.locator('button[type="submit"]')).toBeDisabled();
-  await expect(page.locator('.alert-warning')).toContainText('شكلية');
+  await expect(page.locator('#identifier')).toBeEnabled();
+  await expect(page.locator('#password')).toBeEnabled();
+  await expect(page.locator('button[type="submit"]')).toBeEnabled();
+  await expect(page.locator('.alert-warning')).toContainText('لم تُنشر');
 });
 
 test('صفحة 404 تعطي مخرجًا بدل الطريق المسدود', async ({ page }) => {
