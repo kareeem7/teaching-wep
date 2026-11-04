@@ -53,8 +53,8 @@ test('H-02: renderSidebar يبني الهيكل الفعلي بعد اجتياز
   assert.ok(host);
   assert.ok(doc.querySelector('.app-sidebar'));
   assert.match(doc.querySelector('.app-sidebar__title').textContent, /مساحة العمل/);
-  assert.equal(doc.querySelectorAll('.app-nav__link').length, 1);
-  assert.equal(doc.querySelector('.app-nav__link').getAttribute('aria-current'), 'page');
+  assert.equal(doc.querySelectorAll('.app-sidebar .app-nav__link').length, 1);
+  assert.equal(doc.querySelector('.app-sidebar .app-nav__link').getAttribute('aria-current'), 'page');
   cleanup();
 });
 

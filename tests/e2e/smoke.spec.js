@@ -157,7 +157,7 @@ test.describe('الحارس المحمي وهيكل الدور', () => {
     expect(page.url()).toContain('/pages/shared/app-shell.html');
     await expect(page.locator('.app-sidebar')).toHaveCount(1);
     await expect(page.locator('.app-sidebar__title')).toContainText('مساحة العمل');
-    await expect(page.locator('.app-nav__link')).toHaveCount(1);
+    await expect(page.locator('.app-sidebar .app-nav__link')).toHaveCount(1);
     await expect(page.locator('.empty-state__title')).toContainText('لا بيانات بعد');
     await expect(page.locator('body')).toHaveAttribute('data-role-label', /مساحة العمل/);
     expect(errors).toEqual([]);
