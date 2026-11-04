@@ -30,6 +30,7 @@
 | A-06 | 2026-11-04 | «Please open a pull request for the changes on this branch.» | معتمد ومنفَّذ — أجاز commit/push/PR |
 | A-07 | 2026-11-04 | «Please merge the pull request.» | معتمد ومنفَّذ — أجاز الدمج دون فحص `PASS` (D-305) |
 | **A-08** | 2026-11-04 | **تسليم برومبت تنفيذ المرحلة ٠٠ (`message-01-phase-00-build.txt`) — المرجع الملزم للمرحلة.** | معتمد — أعاد فتح المرحلة لتغطية المهام ٢، ٣، ٤، ٦، ٧، ٨، ٩، ١١، ١٣، ١٤ (D-306) |
+| **A-09** | 2026-11-04 | «Please open a pull request for the changes on this branch.» — على فرع `arena/d20954b6-teaching-wep`. | معتمد — يُجيز commit وpush وPR لإعادة المرحلة ٠٠، ويُلغي أثر D-307 في شأن الرفع فقط |
 
 ---
 
