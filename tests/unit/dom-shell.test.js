@@ -229,6 +229,8 @@ test('المرحلة ٠٣: لا حقل أكاديمي في صفحة الملف �
   assert.equal(doc.querySelector('form').dataset.form, 'account-status');
   assert.equal(doc.querySelectorAll('input[name*="grade" i], input[name*="attendance" i]').length, 0);
   assert.ok(doc.querySelector('#status-reason').hasAttribute('required'));
+  // F-31 (D-03-06): الصفحة التي تُعرض فيها بيانات أكاديمية تُعلن حدودها بنفسها.
+  assert.match(doc.querySelector('[data-readonly-notice]').textContent, /قراءة أكاديمية فقط/);
   cleanup();
 });
 

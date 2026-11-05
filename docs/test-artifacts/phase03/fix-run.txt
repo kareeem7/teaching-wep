@@ -1,0 +1,40 @@
+== جولة الإصلاح بعد فحص المرحلة ٠٣ ==
+التاريخ (UTC): 2026-11-05 · الفرع: arena/f53b657b-teaching-wep
+البيئة: مشروع الاختبار wdqupfoznngqbyphjnie (PostgreSQL 17). لا إنتاج، لا clinicv2.
+
+── المهاجرة المطبَّقة ──
+repo_0008_admin_hardening  (ملف المستودع: supabase/migrations/0008_admin_hardening.sql)
+  · app.admin_stats_self() — الهوية من auth.uid() فقط
+  · revoke execute on app.admin_stats(uuid) from authenticated/anon
+  · public.admin_overview أعيد بناؤه على admin_stats_self()
+  · مُشغِّل audit_events_no_delete (before delete)
+  · لا تغيير على منح admin_invitations (قرار موثَّق: رفض F-30)
+  ملاحظة: create_migration أعاد version=null كالمعتاد؛ التحقق جرى بالاستبطان لا بالرد.
+
+── تحقق بعد التطبيق (استبطان) ──
+admin_stats(uuid) executable by authenticated : false   (كان true)  ✅ F-28
+admin_stats_self executable by authenticated  : true
+admin_overview يستخدم admin_stats_self        : true
+مُشغِّل audit_events_no_delete موجود           : 1
+منح admin_invitations لـauthenticated          : false (مقصود)
+
+── تحقق سلوكي (معاملة ملغاة) ──
+مدرس → app.admin_stats(<uuid الأدمن>)   : EXCEPTION 42501   ✅ (كان يعيد بيانات)
+مدرس → app.admin_stats_self()           : EXCEPTION 42501
+مدرس → public.admin_overview            : 0 صف
+أدمن → public.admin_overview            : 1 صف، teachers_total=1 من الصفوف الحقيقية
+أدمن → app.admin_stats_self()           : تعمل
+حذف صف من app.audit_events              : EXCEPTION 42501   ✅ F-29
+السجل لم يُحذف                          : 1 صف
+
+── أوامر محلية بعد الإصلاح ──
+npm run lint            → exit 0 · 15 ملف HTML، صفر خطأ
+node --test             → 85/85، 0 فاشل، 0 متخطى  (يشمل تأكيد F-31 الجديد)
+npm run bundle:functions→ 6 حزم، كلها تجتاز node --check
+اختبار دخان على الحزمة  → OPTIONS 204 مع CORS · أصل مرفوض 403 · بلا توكن 401 · GET 405
+npx playwright test     → NOT RUN محليًا (Chromium محجوب)؛ يعمل في CI
+
+── ما لم يُنفَّذ في جولة الإصلاح ──
+- نشر الدوال: قرار متوقف على قناة HTTP للتحقق (لا خروج شبكي من الصندوق إلى *.supabase.co: curl = 000).
+- سيناريو HTTP شامل: NOT RUN لنفس السبب.
+- ملف ٠٢ الكامل (٥١ تأكيدًا): NOT RUN (لا psql).
