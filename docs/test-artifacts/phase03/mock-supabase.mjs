@@ -1,5 +1,4 @@
 // خادم وهمي يماثل عقود Supabase التي تلمسها رحلة الإدارة — للتحقق من منطق السكربت محليًا.
-/* eslint-env node */
 /* global URL, Buffer, console */
 import { createServer } from 'node:http';
 
