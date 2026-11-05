@@ -74,6 +74,9 @@ jobs:
             exit 1
           fi
           echo "نسخة CLI:"; npx --yes supabase@latest --version || true
+          # تشخيص آمن للتوكن: الطول وأول ٤ حروف فقط (لا تُطبع القيمة)
+          echo "طول التوكن: ${#SUPABASE_ACCESS_TOKEN} · يبدأ بـ: ${SUPABASE_ACCESS_TOKEN:0:4} ·"
+          echo "عدد الأسطر: $(printf %s "$SUPABASE_ACCESS_TOKEN" | wc -l)"
           for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
             # CLI يشترط مُدخلًا؛ اسمه الافتراضي index.ts. الحزمة JavaScript خالص،
             # وTS مجموعة شاملة لـJS، فننسخها باسم index.ts (المصدر index.js يبقى كما هو).
