@@ -69,15 +69,17 @@ jobs:
             echo "::error::السر SUPABASE_ACCESS_TOKEN غير مضبوط — لا يمكن النشر."
             exit 1
           fi
+          echo "نسخة CLI:"; npx --yes supabase@latest --version || true
           for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
-            cp "supabase/.bundles/${name}.js" "supabase/functions/${name}/index.js"
-            echo "→ نشر ${name}"
+            # CLI يشترط مُدخلًا؛ اسمه الافتراضي index.ts. الحزمة JavaScript خالص،
+            # وTS مجموعة شاملة لـJS، فننسخها باسم index.ts (المصدر index.js يبقى كما هو).
+            cp "supabase/.bundles/${name}.js" "supabase/functions/${name}/index.ts"
+            echo "→ نشر ${name} ($(wc -c <"supabase/functions/${name}/index.ts") بايت)"
             npx --yes supabase@latest functions deploy "${name}" \
               --project-ref "${{ inputs.project_ref }}" \
-              --no-use-api-keys 2>/dev/null || \
-            npx --yes supabase@latest functions deploy "${name}" \
-              --project-ref "${{ inputs.project_ref }}"
+              || { echo "::error::فشل نشر ${name} — راجع الرسالة أعلاه"; exit 1; }
           done
+          echo "::notice::تم إرسال الدوال الست."
 
       - name: الرحلة الكاملة عبر HTTP
         env:
