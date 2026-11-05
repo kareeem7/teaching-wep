@@ -82,9 +82,14 @@ jobs:
             # وTS مجموعة شاملة لـJS، فننسخها باسم index.ts (المصدر index.js يبقى كما هو).
             cp "supabase/.bundles/${name}.js" "supabase/functions/${name}/index.ts"
             echo "→ نشر ${name} ($(wc -c <"supabase/functions/${name}/index.ts") بايت)"
-            npx --yes supabase@latest functions deploy "${name}" \
-              --project-ref "${{ inputs.project_ref }}" \
-              || { echo "::error::فشل نشر ${name} — راجع الرسالة أعلاه"; exit 1; }
+            if ! npx --yes supabase@latest functions deploy "${name}" \
+                 --project-ref "${{ inputs.project_ref }}"; then
+              echo "::warning::فشل النشر العادي — إعادة بمفتاح --debug لالتقاط السبب"
+              npx --yes supabase@latest functions deploy "${name}" \
+                --project-ref "${{ inputs.project_ref }}" --debug 2>&1 | tail -80 || true
+              echo "::error::فشل نشر ${name} — راجع الرسالة أعلاه"
+              exit 1
+            fi
           done
           echo "::notice::تم إرسال الدوال الست."
 
