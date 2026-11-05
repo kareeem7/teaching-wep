@@ -56,3 +56,29 @@ enable_confirmations = false
 enable_signup = false
 # لا مزوّد SMS مدفوعًا: يُنشأ المستخدم بهاتف مؤكَّد من الخادم (C-28)
 enable_confirmations = false
+
+# =====================================================================
+#  الدوال الحيّة: التحقق من JWT يتم داخل الدالة نفسها (R-42 / بوابة ٠٣)
+#  verify_jwt = false هنا يعني أن البوابة لا تفرض توكنًا قبل الكود،
+#  وكل دالة تتحقق بنفسها: جلسة (`requireSession`) أو رمز دعوة مبصوم.
+#  بدونه تُرفض `invite-accept` عند البوابة بلا توكن قبل أن تصل للكود.
+#  هذه القيم تُطبَّق على النشر عبر Supabase CLI (قناة `admin-journey.yml`).
+# =====================================================================
+
+[functions.admin-teachers]
+verify_jwt = false
+
+[functions.admin-instructions]
+verify_jwt = false
+
+[functions.auth-login]
+verify_jwt = false
+
+[functions.auth-recovery]
+verify_jwt = false
+
+[functions.invite-accept]
+verify_jwt = false
+
+[functions.workspace-select]
+verify_jwt = false
