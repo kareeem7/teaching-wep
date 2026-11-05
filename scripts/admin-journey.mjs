@@ -233,7 +233,9 @@ async function main() {
       code: invite.body?.code ?? invite.body?.error?.code ?? null,
       invitation_id: invite.body?.data?.invitation_id ?? null,
       view_link: invite.body?.error?.code === 'FORBIDDEN' ? 'لا صلاحية' : undefined,
-    });
+        message: invite.body?.message ?? null,
+    details: invite.body?.details ?? null,
+});
   }
 
   // ٤) قبول الدعوة: إنشاء الحساب من الرابط نفسه
@@ -254,7 +256,9 @@ async function main() {
       status: accept.status,
       code: accept.body?.code ?? accept.body?.error?.code ?? null,
       role: accept.body?.data?.profile?.role ?? null,
-    });
+        message: accept.body?.message ?? null,
+    details: accept.body?.details ?? null,
+});
 
     const freshLogin = await login(freshPhone, TEACHER_PASSWORD);
     record('دخول المدرس الجديد بعد قبول الدعوة', Boolean(freshLogin.token), {
@@ -300,13 +304,16 @@ async function main() {
       status: suspend.status,
       code: suspend.body?.code ?? suspend.body?.error?.code ?? null,
       changed: suspend.body?.data?.changed ?? null,
-    });
+        message: suspend.body?.message ?? null,
+    details: suspend.body?.details ?? null,
+});
 
     const afterSuspend = await login(TEACHER_PHONE, TEACHER_PASSWORD);
     record('منع دخول المدرس الموقوف', afterSuspend.status !== 200 || !afterSuspend.token, {
       status: afterSuspend.status,
       code: afterSuspend.body?.error?.code ?? null,
-    });
+        message: afterSuspend.body?.message ?? null,
+});
   }
 
   // ٧) تعليمات إدارية للمدرس المحدد
@@ -328,7 +335,9 @@ async function main() {
       status: instruction.status,
       code: instruction.body?.code ?? instruction.body?.error?.code ?? null,
       recipients: instruction.body?.data?.recipients ?? null,
-    });
+        message: instruction.body?.message ?? null,
+    details: instruction.body?.details ?? null,
+});
   }
 }
 

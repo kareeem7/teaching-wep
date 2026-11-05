@@ -83,6 +83,9 @@ export function toErrorResponse(error, { corsHeaders = {}, requestId = null, hea
       code: apiErr.code,
       message: apiErr.message,
       request_id: rid,
+      // تفاصيل التشغيل (رموز داخلية مثل audience/recipients) لا تحمل سرًا،
+      // وغيابها جعل تشخيص رفض 400/500 يستهلك محاولات كاملة (F-37).
+      ...(apiErr.details === null || apiErr.details === undefined ? {} : { details: apiErr.details }),
       ...(apiErr.retryable ? { retryable: true } : {}),
     },
     { status: apiErr.status, corsHeaders, extraHeaders: headers },
