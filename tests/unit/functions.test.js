@@ -647,3 +647,59 @@ test('audit: الحدث يُرسل عبر svc_audit بلا قيمة سرية', a
   assert.equal(call.args.p_detail.reason, 'not-super-admin');
   assert.equal(call.args.p_outcome, 'denied');
 });
+
+// F-39: تعذّر إبطال جلسات GoTrue (مهلة/شبكة) كان يحوّل الرفض الصحيح إلى 502
+test('auth-login: فشل signOutGlobal لا يحوّل رفض الموقوف إلى 502 (F-39)', async () => {
+  const db = fakeDb({
+    rpc: {
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_profile_context: () => ({
+        data: { user_id: 'u-2', role: 'teacher', status: 'suspended', sessions_valid_after: null },
+        error: null,
+      }),
+    },
+    auth: {
+      signInWithPassword: () => ({
+        data: { access_token: fakeJwt({ sub: 'u-2', iat: Math.floor(Date.now() / 1000) }) },
+        error: null,
+      }),
+      signOutGlobal: () => {
+        throw new Error('upstream timeout');
+      },
+    },
+  });
+
+  const response = await authLogin(
+    jsonRequest('/auth-login', { identifier: '+201000000124', password: 'good-pass-9Xy' }),
+    { env: ENV, db },
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, 'ACCOUNT_DISABLED');
+});
+
+test('auth-login: فشل signOutGlobal مع حساب بلا ملف يبقى 403 لا 502 (F-39)', async () => {
+  const db = fakeDb({
+    rpc: {
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_profile_context: () => ({ data: [], error: null }),
+    },
+    auth: {
+      signInWithPassword: () => ({
+        data: { access_token: fakeJwt({ sub: 'u-3', iat: Math.floor(Date.now() / 1000) }) },
+        error: null,
+      }),
+      signOutGlobal: () => {
+        throw new Error('network');
+      },
+    },
+  });
+
+  const response = await authLogin(
+    jsonRequest('/auth-login', { identifier: '+201000000125', password: 'good-pass-9Xy' }),
+    { env: ENV, db },
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, 'ACCOUNT_DISABLED');
+});

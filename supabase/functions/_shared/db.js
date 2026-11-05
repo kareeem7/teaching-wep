@@ -81,7 +81,8 @@ export function createDb(options) {
       return { data: parsed, error: null };
     } catch (error) {
       const message = error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'network';
-      throw apiError('UPSTREAM_UNAVAILABLE', { details: message });
+      // F-39: بلا اسم العملية كان كل 502 يقول «timeout» فقط ولا يُعرف أي نداء تعطّل.
+      throw apiError('UPSTREAM_UNAVAILABLE', { details: `${method} ${path} · ${message}` });
     } finally {
       clearTimeout(timer);
     }
