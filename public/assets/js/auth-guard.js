@@ -61,3 +61,31 @@ export async function guardPage(options = {}) {
   }
   return result;
 }
+
+/**
+ * يحمي صفحة إدارية بفحص الدور من `public.me` (المحمي بـRLS).
+ *
+ * هذا الفحص **تجربة استخدام**: من يتجاوز المتصفح يصل إلى عروض RLS التي تُرجع
+ * صفر صفوف لغير الإدارة، وإلى دوال ترفضه بـ403. الحماية الفعلية على الخادم.
+ *
+ * @param {{redirect?: boolean, prefix?: string, client?: object|null}} [options]
+ * @returns {Promise<{allowed: boolean, reason: string, profile: object|null}>}
+ */
+export async function guardAdminPage(options = {}) {
+  const client = options.client ?? getSupabaseClient();
+  if (!client) return { allowed: false, reason: 'unconfigured', profile: null };
+
+  const { data, error } = await client.from('me').select('*');
+  if (error) return { allowed: false, reason: 'profile-error', profile: null };
+
+  const profile = Array.isArray(data) ? data[0] : data;
+  if (!profile) return { allowed: false, reason: 'no-session', profile: null };
+  if (profile.role !== 'super_admin') {
+    if (options.redirect !== false && typeof window !== 'undefined') {
+      const prefix = options.prefix ?? relativePrefix(window.location.pathname);
+      window.location.replace(`${prefix}pages/errors/403.html`);
+    }
+    return { allowed: false, reason: 'not-admin', profile };
+  }
+  return { allowed: true, reason: 'ok', profile };
+}

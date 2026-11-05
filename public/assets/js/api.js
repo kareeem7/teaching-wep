@@ -156,3 +156,30 @@ export function queryParam(name, search = globalThis.location?.search ?? '') {
 export function looksFilled(value, minLength = 1) {
   return typeof value === 'string' && value.trim().length >= minLength;
 }
+
+/* ------------------------- قراءة عروض القراءة (المرحلة ٠٣) ------------------------- */
+
+/**
+ * يقرأ كل صفوف عرض قراءة عام (مثل `admin_teachers`) عبر عميل Supabase في المتصفح.
+ *
+ * تنبيه ملزم: هذا لا يمنح صلاحية. العرض نفسه `security_invoker` ومحمي بـRLS،
+ * فغير السوبر أدمن يحصل على صفر صفوف — والاختبار الحقيقي في `tests/sql/admin_rls.test.sql`.
+ *
+ * @param {{from: Function}} client
+ * @param {string} viewName
+ * @param {{columns?: string}} [options]
+ * @returns {Promise<Array<Record<string, unknown>>>}
+ */
+export async function selectAll(client, viewName, options = {}) {
+  if (!client || typeof client.from !== 'function') {
+    throw new ApiClientError('NOT_CONFIGURED', CLIENT_ERRORS.NOT_DEPLOYED, { status: 0 });
+  }
+  const { data, error } = await client.from(viewName).select(options.columns ?? '*');
+  if (error) {
+    throw new ApiClientError('VIEW_ERROR', CLIENT_ERRORS.UNEXPECTED, {
+      status: Number(error.status ?? 0),
+      requestId: error.code ?? null,
+    });
+  }
+  return Array.isArray(data) ? data : [];
+}

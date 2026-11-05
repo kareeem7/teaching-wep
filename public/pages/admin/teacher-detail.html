@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="ملف مدرس للإدارة: بيانات الحساب وملخص أكاديمي للقراءة فقط، وقرار تفعيل أو إيقاف بسبب.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.3.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — ملف مدرس</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="admin-teacher-detail" data-requires-auth="true" data-role-label="لوحة الإدارة">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <div class="app-shell">
+    <div data-component="sidebar"></div>
+
+    <div class="app-main">
+      <main id="main" class="app-content">
+        <p class="mb-2"><a href="teachers.html">→ العودة إلى المدرسين</a></p>
+        <h1 data-teacher-name>ملف مدرس</h1>
+
+        <div class="alert alert-warning" data-missing-teacher role="status" hidden>
+          تعذّر العثور على هذا المدرس، أو أن الرابط لا يحمل معرّفًا صالحًا.
+        </div>
+
+        <p class="text-danger-mh" data-admin-error role="alert" hidden></p>
+
+        <section class="card-mh" aria-labelledby="summary-heading">
+          <h2 class="card-mh__title" id="summary-heading">بيانات الحساب</h2>
+          <dl class="row mb-0" data-teacher-summary></dl>
+        </section>
+
+        <section class="card-mh" aria-labelledby="status-heading">
+          <h2 class="card-mh__title" id="status-heading">تفعيل أو إيقاف</h2>
+          <p class="text-muted-mh">
+            الإيقاف يمنع الوصول الجديد فورًا ويُبطل الجلسات الصادرة، <strong>ولا يحذف أي بيانات</strong>:
+            الطلاب والمجموعات والسجل تبقى كما هي.
+          </p>
+
+          <form data-form="account-status" novalidate>
+            <div class="row g-3">
+              <div class="col-md-4">
+                <div class="field">
+                  <label class="field__label" for="status-select">الحالة الجديدة</label>
+                  <select class="field__control" id="status-select" name="status" required>
+                    <option value="suspended">إيقاف</option>
+                    <option value="active">تفعيل</option>
+                  </select>
+                </div>
+              </div>
+              <div class="col-md-8">
+                <div class="field">
+                  <label class="field__label" for="status-reason">السبب (إلزامي)</label>
+                  <input class="field__control" id="status-reason" name="reason" type="text"
+                         minlength="5" maxlength="300" required>
+                  <p class="field__hint">يُحفظ في سجل الحساب وسجل التدقيق مع الوقت والفاعل.</p>
+                </div>
+              </div>
+            </div>
+
+            <p class="text-danger-mh" data-form-error role="alert" hidden></p>
+            <button class="btn-mh" type="submit" data-action="set-status">تطبيق القرار</button>
+          </form>
+        </section>
+
+        <section class="card-mh" aria-labelledby="students-heading">
+          <h2 class="card-mh__title" id="students-heading">طلاب المساحة <span class="badge text-bg-secondary">قراءة فقط</span></h2>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <caption class="visually-hidden-mh">ملفات الطلاب لدى هذا المدرس — لا تعديل من هنا</caption>
+              <thead>
+                <tr>
+                  <th scope="col">الطالب</th>
+                  <th scope="col">الكود المحلي</th>
+                  <th scope="col">الحالة</th>
+                </tr>
+              </thead>
+              <tbody data-teacher-students></tbody>
+            </table>
+          </div>
+          <p class="text-muted-mh mt-3 mb-0">
+            هذه الشاشة لا تحتوي أي حقل لتعديل بيانات الطالب أو درجاته أو حضوره — وهذا مقصود.
+          </p>
+        </section>
+
+        <section class="card-mh" aria-labelledby="events-heading">
+          <h2 class="card-mh__title" id="events-heading">قرارات الحساب</h2>
+          <ul class="list-group list-group-flush" data-account-events></ul>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        مِنهاج · الإصدار 0.3.0 · <span class="tnum" data-current-year></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

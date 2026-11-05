@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="لوحة السوبر أدمن: أرقام حقيقية من صفوف المنصة وآخر الأحداث الإدارية. لا تعديل أكاديمي من هنا.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.3.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — لوحة الإدارة</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="admin-dashboard" data-requires-auth="true" data-role-label="لوحة الإدارة">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <div class="app-shell">
+    <div data-component="sidebar"></div>
+
+    <div class="app-main">
+      <main id="main" class="app-content">
+        <h1>لوحة السوبر أدمن</h1>
+
+        <div class="alert alert-info" role="status" data-readonly-notice>
+          <strong>قراءة أكاديمية فقط.</strong>
+          هذه اللوحة تدير <em>الحسابات</em> (دعوة، تفعيل، إيقاف) وتتابع الاستخدام.
+          لا يوجد هنا — ولا في أي شاشة إدارية — تعديل للحضور أو الدرجات أو مفاتيح الإجابة،
+          وأي محاولة من هذا النوع تُرفض على الخادم.
+        </div>
+
+        <p class="text-danger-mh" data-admin-error role="alert" hidden></p>
+
+        <section class="card-mh" aria-labelledby="stats-heading">
+          <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <h2 class="card-mh__title mb-0" id="stats-heading">أرقام المنصة</h2>
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted-mh">آخر تحديث: <span class="tnum" data-updated-at>—</span></span>
+              <button class="btn btn-sm btn-outline-secondary" type="button" data-action="refresh">تحديث</button>
+            </div>
+          </div>
+          <div class="stat-grid mt-3" data-stats></div>
+          <p class="text-muted-mh mt-3 mb-0">
+            كل رقم يُحسب من صفوف حقيقية. الرقم «—» يعني أن القراءة لم تنجح، وليس صفرًا.
+          </p>
+        </section>
+
+        <section class="card-mh" aria-labelledby="activity-heading">
+          <h2 class="card-mh__title" id="activity-heading">آخر النشاط الإداري</h2>
+          <ul class="list-group list-group-flush" data-audit-list></ul>
+          <p class="text-muted-mh mt-3 mb-0">
+            المصدر سجل التدقيق (append-only): دعوات، إيقاف/تفعيل، وتعليمات. لا يُحذف حدث ولا يُعدَّل.
+          </p>
+        </section>
+
+        <section class="card-mh" aria-labelledby="links-heading">
+          <h2 class="card-mh__title" id="links-heading">انتقل إلى</h2>
+          <ul class="stack-2 mb-0">
+            <li><a href="teachers.html">قائمة المدرسين</a> — دعوة، إعادة إصدار، تفعيل، إيقاف.</li>
+            <li><a href="instructions.html">التعليمات الداخلية</a> — إرسال لمدرس أو للمدرسين النشطين.</li>
+          </ul>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        مِنهاج · الإصدار 0.3.0 · <span class="tnum" data-current-year></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>
