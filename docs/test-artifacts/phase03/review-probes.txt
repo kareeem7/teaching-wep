@@ -1,0 +1,51 @@
+== تحقيقات الفاحص المستقلة — المرحلة ٠٣ ==
+الإصدار: 9882c719729d3e8c95b63225249d535d0f292592
+البيئة: مشروع الاختبار wdqupfoznngqbyphjnie (PostgreSQL 17) — كل تحقيق داخل معاملة تُلغى (rollback).
+لم تُلمس clinicv2 ولا أي بيانات إنتاج. جميع المعرفات اصطناعية.
+
+── الجولة ١: الأدوار (anon / authenticated / service_role) ──
+EXCEPTION 42501 - anon→public.admin_overview            (منع كامل، لا 0 صفوف)
+EXCEPTION 42501 - anon→app.admin_stats(null)            (مرفوض)
+OK = 0        - teacher→admin_teachers
+OK = 0        - teacher→admin_audit_log
+EXCEPTION 42501 - teacher→admin_invitations             (لا منح للمدرس)
+EXCEPTION 42501 - teacher→svc_admin_set_account_status
+OK = 1        - teacher→app.admin_stats(<uuid الأدمن>)  ⚠ الدالة أعادت بيانات فعلية لمدرس
+EXCEPTION 42501 - service_role→غلاف بهوية مدرس          (الفاعل مُتحقَّق منه)
+EXCEPTION 22023 - إيقاف بسبب فارغ
+NO-EXCEPTION  - إيقاف بسبب صالح
+OK = 0        - المدرس الموقوف→app.student_profiles
+OK = 0        - المدرس الموقوف→public.groups
+OK = 0        - الطالب→my_notifications
+OK = 0        - الطالب→ملفات مساحة مدرس آخر
+
+── الجولة ٢: البيانات والأثر (سياق postgres) ──
+OK = 1 - account_event يحمل user_id + reason + actor_user_id
+OK = 1 - audit_events.actor_role = super_admin
+OK = 1 - all_teachers → المستلمون = المدرسون النشطون فقط (الموقوف مُستثنى)
+OK = 0 - المدرس الموقوف ليس مستلمًا
+OK = 0 - الطالب ليس مستلمًا
+OK = 1 - teachers + user_ids → مستلم واحد
+OK = 1 - الدعوة محفوظة ببصمة ٦٤
+OK = 0 - البصمة غير موجودة في audit_events.detail
+OK = 0 - البصمة غير موجودة في invitations.meta
+EXCEPTION 42900 - إعادة الإصدار الرابعة خلال ٢٤ ساعة (الحد ٣)
+OK = 0 - admin_invitations لا يحوي عمود token_hash
+OK = 0 - admin_teachers لا يحوي phone_e164 (الهاتف مقنّص)
+OK = 2 - teachers_total مطابق للصفوف
+OK = 1 - teachers_active مطابق
+OK = 1 - teachers_suspended مطابق
+OK = 1 - students_total مطابق
+
+── الجولة ٣: الانحدار على مسارات ٠٢ (مكتوب بواسطة الفاحص) ──
+12/12 — انظر tests/sql/phase02_regression.test.sql
+ملف ٠٢ الكامل (٥١ تأكيدًا) لم يُعده الفاحص — NOT RUN (انظر التقرير §٥).
+
+── استبطان البنية ──
+- كل الجداول الجديدة: RLS = true
+- ٧ عروض admin/my_notifications: security_invoker=true · + admin_students = ٨
+- منح دوال القرار: authenticated=false · anon=false · service_role=true (٥ أغلفة)
+- استثناء: app.admin_stats و app.is_notification_recipient ممنوحة لـauthenticated و anon
+- USAGE على مخطط app: authenticated=true · anon=false
+- عدد الدوال المطبَّقة على المشروع: 0  ← ⚠ لا دالة Edge منشورة
+- pgrst db-schemas: غير مضبوط (افتراضي public فقط) ⇒ نداء app.* عبر REST غير متاح نظريًا
