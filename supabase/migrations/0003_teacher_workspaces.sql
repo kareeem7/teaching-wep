@@ -219,7 +219,67 @@ as $$
 $$;
 
 comment on function app.assistant_can(uuid, text, uuid) is
-  'الصلاحية الفعلية للمساعد. قائمة scope_group_ids فارغة = كل مجموعات المدرس.';
+  'الصلاحية الفعلية للمساعد. قائمة scope_group_ids فارغة = كل مجموعات المدرس. لا تُستخدم لملفات الطلاب مباشرةً (F-02): استخدم app.assistant_can_see_student.';
+
+-- F-02: نطاق المجموعات يجب أن يُفرض على ملفات الطلاب، لا أن يُتجاهل بتمرير null.
+-- الدالة الأولى: هل للمساعد الصلاحية على مستوى المساحة كلها (نطاق فارغ)؟
+create or replace function app.assistant_has_full_scope(target_teacher_id uuid, target_action text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = app, pg_temp
+as $$
+  select app.is_active() and exists (
+    select 1
+    from app.teacher_memberships m
+    join app.assistant_permissions p on p.membership_id = m.id
+    where m.teacher_id = target_teacher_id
+      and m.user_id = auth.uid()
+      and m.role_in_workspace = 'assistant'
+      and m.status = 'active'
+      and p.action = target_action
+      and cardinality(p.scope_group_ids) = 0
+  );
+$$;
+
+comment on function app.assistant_has_full_scope(uuid, text) is
+  'المساعد يملك الصلاحية على كل مجموعات المساحة (scope_group_ids فارغة). تُستخدم عند الإنشاء: لا نطاق ⇒ لا إنشاء.';
+
+-- الدالة الثانية: هل للمساعد الصلاحية على ملف طالب بعينه عبر مجموعاته؟
+create or replace function app.assistant_can_see_student(target_student_profile_id uuid, target_action text)
+returns boolean
+language sql
+stable
+security definer
+set search_path = app, pg_temp
+as $$
+  select app.is_active() and exists (
+    select 1
+    from app.student_profiles sp
+    join app.teacher_memberships m on m.teacher_id = sp.teacher_id
+    join app.assistant_permissions p on p.membership_id = m.id
+    where sp.id = target_student_profile_id
+      and m.user_id = auth.uid()
+      and m.role_in_workspace = 'assistant'
+      and m.status = 'active'
+      and p.action = target_action
+      and (
+        cardinality(p.scope_group_ids) = 0
+        or exists (
+          select 1
+          from public.group_memberships gm
+          where gm.student_profile_id = sp.id
+            and gm.left_at is null
+            and gm.group_id = any (p.scope_group_ids)
+        )
+      )
+  );
+$$;
+
+comment on function app.assistant_can_see_student(uuid, text) is
+  'المساعد يرى/يعدّل ملف الطالب فقط إن كان ضمن مجموعة داخلة في نطاقه، أو نطاقه فارغ (كل المساحة).';
+
 
 create or replace function app.student_profile_of_current_user(target_teacher_id uuid)
 returns uuid

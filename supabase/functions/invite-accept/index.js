@@ -7,7 +7,8 @@
  *
  * `assistant_invite` موجود في المخطط لكن **غير منفذ** هنا (المرحلة ٠٤) — يُرفض بوضوح.
  *
- * الترتيب المقصود: تحقق ← إنشاء/تحديد الهوية ← استهلاك الدعوة ذرّيًا ← (تعويض عند الفشل).
+ * الترتيب المقصود: تحقق ← إنشاء/تحديد الهوية ← `svc_accept_invitation` ذرّيًا
+ * (استهلاك + هوية + ربط في معاملة واحدة) ← تعويض بحذف مستخدم Auth وحده عند الفشل.
  * لا يوجد اعتماد على «حسن النية» من المتصفح: نوع الدعوة يُفحص داخل SQL أيضًا.
  */
 import { apiError, okResponse, toErrorResponse, logError, newRequestId } from '../_shared/errors.js';
@@ -131,48 +132,41 @@ export async function handler(request, deps = {}) {
       identity = { userId: created.id, isNew: true };
     }
 
-    // ---------- ٢) استهلاك الدعوة ذرّيًا ----------
-    const { data: consumed, error: consumeError } = await db.rpc('svc_consume_invitation', {
+    // ---------- ٢) قبول ذرّي: استهلاك + هوية + ربط في معاملة واحدة (F-03) ----------
+    // لم يبقَ استهلاك منفصل: لو رُفضت الهوية (موقوف/خلط أدوار) أُلغي الاستهلاك تلقائيًا،
+    // فلا تُحرق دعوة صالحة بسبب فشل لاحق.
+    const { data: acceptedRows, error: acceptError } = await db.rpc('svc_accept_invitation', {
       p_token_hash: tokenHash,
       p_kind: invite.kind,
       p_user_id: identity.userId,
-    });
-    if (consumeError) {
-      if (createdUserId) await db.auth.deleteUser(createdUserId);
-      throw apiError('INVITATION_INVALID', { requestId, details: 'consume-failed' });
-    }
-
-    // ---------- ٣) ترتيب الأثر (دوال خدمة: app غير مكشوف) ----------
-    const { data: profileRow, error: profileError } = await db.rpc('svc_accept_identity', {
-      p_user_id: identity.userId,
       p_full_name: fullName,
-      p_role: invite.kind === 'teacher_invite' ? 'teacher' : 'student',
       p_phone: identifier.kind === 'phone' ? identifier.value : null,
       p_code: identifier.kind === 'code' ? identifier.value : null,
-      p_status: 'active',
     });
-    if (profileError) {
+
+    if (acceptError) {
+      const code = mapAcceptErrorCode(acceptError);
+      // F-12: محاولة مرفوضة تُسجَّل (رمز السبب فقط، بلا معرّف ولا هاتف).
+      await safeAudit(db, 'invite.rejected', identity.userId, { kind: invite.kind, reason: code }, 'failed');
       if (createdUserId) await db.auth.deleteUser(createdUserId);
-      throw apiError('INTERNAL', { requestId, details: 'profile' });
+      throw apiError(code, { requestId, details: 'accept' });
     }
 
-    if (invite.kind === 'student_link') {
-      const { error: linkError } = await db.rpc('svc_link_student_profile', {
-        p_student_profile_id: consumed.student_profile_id,
-        p_user_id: identity.userId,
-      });
-      if (linkError) throw apiError('INTERNAL', { requestId, details: 'link' });
-    }
+    const accepted = Array.isArray(acceptedRows) ? acceptedRows[0] : acceptedRows;
 
-    await safeAudit(db, `invite.accepted.${invite.kind}`, identity.userId, {
-      new_identity: identity.isNew,
-    });
+    await safeAudit(
+      db,
+      `invite.accepted.${invite.kind}`,
+      identity.userId,
+      { new_identity: identity.isNew },
+      'ok',
+    );
 
     return okResponse(
       {
         kind: invite.kind,
-        profile: publicProfile(Array.isArray(profileRow) ? profileRow[0] : profileRow),
-        teacher_id: invite.teacher_id ?? null,
+        profile: publicProfile(accepted?.profile),
+        teacher_id: accepted?.teacher_id ?? invite.teacher_id ?? null,
         requires_login: true,
       },
       { corsHeaders: corsHeaders(request.headers.get('origin'), allowlist) },
@@ -181,6 +175,16 @@ export async function handler(request, deps = {}) {
     logError('invite-accept', error, { requestId });
     return toErrorResponse(error, { corsHeaders: corsHeaders(request.headers.get('origin'), allowlist), requestId });
   }
+}
+
+/** تحويل رسالة الاستثناء من SQL إلى رمز API — بلا تسريب نص قاعدة البيانات للمتصفح. */
+function mapAcceptErrorCode(error) {
+  const text = `${error?.message ?? ''} ${error?.details ?? ''} ${error?.hint ?? ''}`;
+  if (text.includes('ACCOUNT_DISABLED')) return 'ACCOUNT_DISABLED';
+  if (text.includes('ROLE_MISMATCH')) return 'ROLE_MISMATCH';
+  if (text.includes('invalid-full-name')) return 'INVALID_INPUT';
+  if (text.includes('invitation-') || text.includes('not-linkable')) return 'INVITATION_INVALID';
+  return 'INTERNAL';
 }
 
 function inviteErrorCode(reason) {
@@ -194,9 +198,9 @@ function clientIpOf(request) {
   return request.headers.get('x-real-ip') ?? 'unknown';
 }
 
-async function safeAudit(db, action, actor, detail = {}) {
+async function safeAudit(db, action, actor, detail = {}, outcome = 'ok') {
   try {
-    await db.rpc('svc_audit', { p_action: action, p_actor: actor, p_outcome: 'ok', p_detail: detail });
+    await db.rpc('svc_audit', { p_action: action, p_actor: actor, p_outcome: outcome, p_detail: detail });
   } catch {
     // التدقيق لا يُسقط العملية، لكن لا ندّعي أنه سُجّل
   }

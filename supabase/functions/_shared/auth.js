@@ -255,7 +255,10 @@ export function isSessionStillValid(input) {
   if (!validAfterIso) return true;
   const validAfter = Date.parse(validAfterIso);
   if (Number.isNaN(validAfter)) return false;
-  return issuedAtSeconds * 1000 >= validAfter;
+  // F-07: `iat` ثوانٍ صحيحة، و`validAfter` بكسر عشري. المقارنة بالمللي ثانية
+  // كانت ترفض جلسة أُصدرت في نفس الثانية (بعد تغيير كلمة مرور مثلًا).
+  // الآن الطرفان إلى ثانية صحيحة — نفس قاعدة app.is_active() في SQL.
+  return Math.floor(issuedAtSeconds) >= Math.floor(validAfter / 1000);
 }
 
 /** حقول الملف التي يجوز إرجاعها للمتصفح — لا كلمة مرور ولا بصمة ولا هاتف كاملًا. */

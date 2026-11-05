@@ -16,6 +16,7 @@ export const ERROR_SPECS = Object.freeze({
   INVALID_SESSION: { status: 401, message: 'الجلسة منتهية أو غير صالحة. سجّل الدخول من جديد.' },
   ACCOUNT_DISABLED: { status: 403, message: 'الحساب غير مفعّل أو موقوف. تواصل مع مدرسك.' },
   FORBIDDEN: { status: 403, message: 'لا تملك صلاحية هذا الإجراء.' },
+  ROLE_MISMATCH: { status: 403, message: 'هذا الرابط لا يناسب نوع هذا الحساب. اطلب الرابط الصحيح من مدرسك.' },
   NOT_A_MEMBER: { status: 403, message: 'لست عضوًا في هذه المساحة.' },
   INVITATION_INVALID: { status: 400, message: 'رابط الدعوة غير صالح أو مستخدم من قبل أو منتهي الصلاحية.' },
   INVITATION_EXPIRED: { status: 410, message: 'انتهت صلاحية رابط الدعوة. اطلب دعوة جديدة.' },

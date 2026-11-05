@@ -107,6 +107,34 @@ $$;
 comment on function app.current_profile() is
   'ملف المستخدم الحالي. null إن لم يوجد — وهذا يعني رفضًا لا سماحًا.';
 
+create or replace function app.jwt_iat()
+returns bigint
+language plpgsql
+stable
+as $$
+declare
+  v_claims jsonb;
+  v_iat text;
+begin
+  begin
+    v_claims := nullif(current_setting('request.jwt.claims', true), '')::jsonb;
+  exception when others then
+    return null;
+  end;
+  if v_claims is null then
+    return null;
+  end if;
+  v_iat := v_claims ->> 'iat';
+  if v_iat is null or v_iat !~ '^[0-9]{1,12}$' then
+    return null;
+  end if;
+  return v_iat::bigint;
+end;
+$$;
+
+comment on function app.jwt_iat() is
+  'وقت إصدار التوكن بالثواني الصحيحة، أو null إن غاب التشكيل أو كان غير صالح. الغياب = رفض لا سماح (F-09).';
+
 create or replace function app.is_active()
 returns boolean
 language sql
@@ -119,15 +147,14 @@ as $$
     from app.profiles p
     where p.user_id = auth.uid()
       and p.status = 'active'
-      and coalesce(
-        (nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'iat')::bigint,
-        extract(epoch from now())::bigint
-      ) >= extract(epoch from p.sessions_valid_after)::bigint
+      -- F-07: الطرفان بالثواني الصحيحة (floor) — لا تقريب يُرفض جلسة صحيحة،
+      -- ولا افتراض «الآن» عند غياب iat (F-09): الغياب يقارن بـ null ⇒ false.
+      and app.jwt_iat() >= floor(extract(epoch from p.sessions_valid_after))::bigint
   );
 $$;
 
 comment on function app.is_active() is
-  'الحساب نشط وجلسته أحدث من آخر تغيير حساس. أي RLS تكتب/تقرأ بيانات شخصية تستخدمها.';
+  'الحساب نشط وجلسته أحدث من آخر تغيير حساس (دقة ثانية واحدة). أي RLS تكتب/تقرأ بيانات شخصية تستخدمها.';
 
 create or replace function app.current_role_name()
 returns text

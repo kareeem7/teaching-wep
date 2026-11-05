@@ -13,6 +13,9 @@ export const LIMITS = Object.freeze({
   'recovery:teacher': { limit: 3, windowSeconds: 60 * 60 },
   'recovery:student': { limit: 5, windowSeconds: 24 * 60 * 60 },
   'invite:ip': { limit: 10, windowSeconds: 60 * 60 },
+  // F-06: إكمال الاستعادة كان بلا حدّ. الرمز ٢٥٦ بتًا يمنع التخمين عمليًا،
+  // لكن الحدّ يمنع الإغراق ويجعل السياسة مطبَّقة لا موثَّقة فقط.
+  'recovery:complete': { limit: 10, windowSeconds: 60 * 60 },
   'workspace:session': { limit: 60, windowSeconds: 60 },
 });
 
@@ -68,7 +71,9 @@ export async function enforceRateLimit(db, { route, key, nowMs = Date.now() }) {
   const rule = LIMITS[route];
   if (!rule) throw new Error(`مسار بلا حدّ معرّف: ${route}`);
 
-  const { data, error } = await db.rpc('rate_limit_hit', {
+  // F-13: الدالة المكشوفة في PostgREST اسمها `public.svc_rate_limit_hit`.
+  // كان الاسم هنا `rate_limit_hit` (دالة app الداخلية غير المكشوفة) ⇒ 404 ⇒ 502 على كل دخول.
+  const { data, error } = await db.rpc('svc_rate_limit_hit', {
     p_key: key,
     p_limit: rule.limit,
     p_window_seconds: rule.windowSeconds,

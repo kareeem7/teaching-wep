@@ -18,7 +18,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, app, pg_temp;
 
-select plan(37);
+select plan(51);
 
 -- ---------- تجهيز هويات اصطناعية ----------
 -- لا بيانات حقيقية: أسماء وأرقام وهمية داخل معاملة تُلغى في النهاية.
@@ -187,12 +187,14 @@ select throws_ok(
   null,
   'السوبر أدمن لا يملك كتابة أكاديمية (إنشاء مجموعة مرفوض)'
 );
-select throws_ok(
-  $$ update app.student_profiles set full_name = 'تعديل إداري'
-     where id = 'aaaaaaaa-0000-0000-0000-000000000001' $$,
-  '42501',
-  null,
-  'السوبر أدمن لا يعدّل ملف طالب'
+select is(
+  (with u as (
+     update app.student_profiles set full_name = 'تعديل إداري'
+     where id = 'aaaaaaaa-0000-0000-0000-000000000001'
+     returning 1
+   ) select count(*)::int from u),
+  0,
+  'السوبر أدمن لا يعدّل ملف طالب (لا سياسة UPDATE ⇒ صفر صفوف لا استثناء)'
 );
 
 -- =====================================================================
@@ -353,6 +355,126 @@ select isnt(
   public.svc_invalidate_sessions('44444444-4444-4444-4444-444444444444'),
   null,
   'إبطال الجلسات يعيد وقت الإبطال'
+);
+
+-- =====================================================================
+--  ١١) قبول الدعوة ذرّيًا: لا إحياء لحساب موقوف، ولا حرق لدعوة (F-01/F-03)
+-- =====================================================================
+reset role;
+insert into app.student_profiles (id, teacher_id, user_id, full_name, local_code, status)
+values ('aaaaaaaa-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111',
+        null, 'طالب بلا حساب', 'S4', 'active');
+
+insert into app.invitations (id, kind, token_hash, student_profile_id, created_by, expires_at)
+values ('dddddddd-0000-0000-0000-000000000005', 'student_link', repeat('f', 64),
+        'aaaaaaaa-0000-0000-0000-000000000004', '99999999-9999-9999-9999-999999999999',
+        now() + interval '1 hour');
+
+select throws_ok(
+  $$ select public.svc_accept_invitation(
+       repeat('f', 64), 'student_link',
+       '44444444-4444-4444-4444-444444444444', 'طالب موقوف', null, null) $$,
+  '28000',
+  null,
+  'F-01: الحساب الموقوف لا يُحيا بقبول دعوة (ACCOUNT_DISABLED)'
+);
+select is(
+  (select used_at from app.invitations where id = 'dddddddd-0000-0000-0000-000000000005'),
+  null::timestamptz,
+  'F-03: رفض الهوية لا يستهلك الدعوة (استهلاك + هوية في معاملة واحدة)'
+);
+
+-- =====================================================================
+--  ١٢) نطاق مجموعات المساعد يُفرض على ملفات الطلاب (F-02)
+-- =====================================================================
+reset role;
+update app.assistant_permissions
+set scope_group_ids = array['cccccccc-0000-0000-0000-000000000001']::uuid[]
+where membership_id = 'bbbbbbbb-0000-0000-0000-000000000002' and action = 'students:read';
+
+insert into app.assistant_permissions (membership_id, action, scope_group_ids)
+values ('bbbbbbbb-0000-0000-0000-000000000002', 'students:write',
+        array['cccccccc-0000-0000-0000-000000000001']::uuid[]);
+
+select pg_temp.login_as('33333333-3333-3333-3333-333333333333');
+select is(
+  (select count(*)::int from app.student_profiles),
+  1,
+  'F-02: المساعد بنطاق «مجموعة أ» يرى طالب المجموعة فقط (لا كل المساحة)'
+);
+select is(
+  (select count(*)::int from public.my_students),
+  1,
+  'F-02: my_students يحترم النطاق نفسه'
+);
+select is(
+  (with u as (
+     update app.student_profiles set full_name = 'تعديل خارج النطاق'
+     where id = 'aaaaaaaa-0000-0000-0000-000000000003'
+     returning 1
+   ) select count(*)::int from u),
+  0,
+  'F-02: المساعد لا يعدّل طالبًا خارج نطاقه حتى بصلاحية students:write'
+);
+select throws_ok(
+  $$ insert into app.student_profiles (teacher_id, full_name, local_code)
+     values ('11111111-1111-1111-1111-111111111111', 'خارج النطاق', 'S5') $$,
+  '42501',
+  null,
+  'F-02: المساعد بنطاق محدود لا ينشئ طالبًا جديدًا (الإنشاء يحتاج نطاقًا كاملًا)'
+);
+
+-- =====================================================================
+--  ١٣) لا حذف نهائي لمجموعة (F-05)
+-- =====================================================================
+select pg_temp.login_as('11111111-1111-1111-1111-111111111111');
+select is(
+  (with d as (
+     delete from public.groups where id = 'cccccccc-0000-0000-0000-000000000001' returning 1
+   ) select count(*)::int from d),
+  0,
+  'F-05: المدرس لا يحذف مجموعة حذفًا نهائيًا (الأرشفة بدل الحذف)'
+);
+select is(
+  (select count(*)::int from public.group_memberships),
+  1,
+  'F-05: عضويات المجموعة لم تُمسح بحذف غير ممكن'
+);
+
+-- =====================================================================
+--  ١٤) سجل التدقيق: TRUNCATE مرفوض أيضًا (F-08)
+-- =====================================================================
+reset role;
+select throws_ok('truncate app.audit_events', '42501', null,
+  'F-08: TRUNCATE على سجل التدقيق مرفوض (append-only بلا استثناء)');
+
+-- =====================================================================
+--  ١٥) غياب claims ليس سماحًا (F-09)
+-- =====================================================================
+select set_config('request.jwt.claims', '', true);
+select is(app.jwt_iat(), null::bigint, 'F-09: غياب iat يُقرأ null لا «الآن»');
+select is(app.is_active(), false, 'F-09: بلا claims لا وصول حتى لو كان الحساب نشطًا');
+
+-- =====================================================================
+--  ١٦) متابعة الإدارة للقراءة فقط صارت متاحة (F-04)
+-- =====================================================================
+select pg_temp.login_as('99999999-9999-9999-9999-999999999999');
+select is(
+  (select count(*)::int from app.student_profiles),
+  4,
+  'F-04: السوبر أدمن يقرأ كل ملفات الطلاب (متابعة أكاديمية)'
+);
+select is(
+  (select count(*)::int from public.admin_students),
+  4,
+  'F-04: واجهة admin_students تُرجع الملفات مع اسم المدرس'
+);
+
+select pg_temp.login_as('11111111-1111-1111-1111-111111111111');
+select is(
+  (select count(*)::int from public.admin_students),
+  0,
+  'F-04: المدرس لا يرى شيئًا من واجهة الإدارة (ليست بابًا خلفيًا)'
 );
 
 -- ---------- نهاية ----------

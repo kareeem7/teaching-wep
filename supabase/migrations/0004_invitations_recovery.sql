@@ -174,6 +174,12 @@ create trigger audit_events_no_update
   before update or delete on app.audit_events
   for each row execute function app.prevent_audit_mutation();
 
+-- F-08: TRUNCATE لا يمرّ على مشغّلات الصفوف، فيحتاج مشغّلًا على مستوى العبارة.
+drop trigger if exists audit_events_no_truncate on app.audit_events;
+create trigger audit_events_no_truncate
+  before truncate on app.audit_events
+  for each statement execute function app.prevent_audit_mutation();
+
 -- ---------- استهلاك الدعوة (ذرّي) ----------
 create or replace function app.consume_invitation(
   p_token_hash text,

@@ -122,6 +122,13 @@ async function handleComplete({ request, body, db, rateSecret, nowMs, allowlist,
   const password = typeof body.password === 'string' ? body.password : '';
   if (!isTokenShapeValid(token)) throw apiError('RECOVERY_INVALID', { requestId });
 
+  // F-06: حدّ على الإكمال نفسه (بلا جلسة، فالمفتاح بصمة الرمز لا المستخدم).
+  await enforceRateLimit(db, {
+    route: 'recovery:complete',
+    key: `recovery:complete:${await hashRateKey(token.slice(0, 12), rateSecret)}`,
+    nowMs,
+  });
+
   const policy = validatePassword(password);
   if (!policy.ok) throw apiError('WEAK_PASSWORD', { requestId, details: { issues: policy.issues } });
 

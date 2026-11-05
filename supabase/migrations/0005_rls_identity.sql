@@ -109,7 +109,8 @@ create policy student_profiles_select_teacher on app.student_profiles
   for select to authenticated
   using (
     app.is_workspace_teacher(teacher_id)
-    or app.assistant_can(teacher_id, 'students:read', null)
+    -- F-02: النطاق يُفرض على الطالب نفسه، لا يُمرَّر null فيُتجاهل.
+    or app.assistant_can_see_student(id, 'students:read')
   );
 
 drop policy if exists student_profiles_write_teacher on app.student_profiles;
@@ -117,7 +118,8 @@ create policy student_profiles_write_teacher on app.student_profiles
   for insert to authenticated
   with check (
     app.is_workspace_teacher(teacher_id)
-    or app.assistant_can(teacher_id, 'students:write', null)
+    -- F-02: مساعد بنطاق مجموعات محدود لا ينشئ طالبًا خارج نطاقه (لا عضوية بعد الإنشاء).
+    or app.assistant_has_full_scope(teacher_id, 'students:write')
   );
 
 drop policy if exists student_profiles_update_teacher on app.student_profiles;
@@ -125,11 +127,11 @@ create policy student_profiles_update_teacher on app.student_profiles
   for update to authenticated
   using (
     app.is_workspace_teacher(teacher_id)
-    or app.assistant_can(teacher_id, 'students:write', null)
+    or app.assistant_can_see_student(id, 'students:write')
   )
   with check (
     app.is_workspace_teacher(teacher_id)
-    or app.assistant_can(teacher_id, 'students:write', null)
+    or app.assistant_can_see_student(id, 'students:write')
   );
 
 drop policy if exists student_profiles_select_own on app.student_profiles;
@@ -175,6 +177,29 @@ create policy assistant_permissions_select_teacher on app.assistant_permissions
   );
 -- الكتابة على الصلاحيات: عبر Edge Functions فقط (تفويض = قرار مدرس موثّق في التدقيق).
 
+-- ---------- الإدارة: متابعة أكاديمية للقراءة فقط (F-04) ----------
+-- السوبر أدمن يتابع ولا يشارك: سياسات select فقط، ولا سياسة insert/update/delete
+-- على أي جدول أكاديمي. الغياب هنا مقصود، وليس سهوًا.
+drop policy if exists student_profiles_select_admin on app.student_profiles;
+create policy student_profiles_select_admin on app.student_profiles
+  for select to authenticated
+  using (app.is_super_admin());
+
+drop policy if exists groups_select_admin on public.groups;
+create policy groups_select_admin on public.groups
+  for select to authenticated
+  using (app.is_super_admin());
+
+drop policy if exists memberships_select_admin on app.teacher_memberships;
+create policy memberships_select_admin on app.teacher_memberships
+  for select to authenticated
+  using (app.is_super_admin());
+
+drop policy if exists group_memberships_select_admin on public.group_memberships;
+create policy group_memberships_select_admin on public.group_memberships
+  for select to authenticated
+  using (app.is_super_admin());
+
 -- ---------- المجموعات ----------
 drop policy if exists groups_select_member on public.groups;
 create policy groups_select_member on public.groups
@@ -214,10 +239,8 @@ create policy groups_update_teacher on public.groups
     or app.assistant_can(teacher_id, 'groups:write', id)
   );
 
+-- F-05: لا سياسة DELETE للمجموعات — الأرشفة بحالة status='archived' حفاظًا على العضويات والتاريخ.
 drop policy if exists groups_delete_teacher on public.groups;
-create policy groups_delete_teacher on public.groups
-  for delete to authenticated
-  using (app.is_workspace_teacher(teacher_id));
 
 -- ---------- عضويات المجموعات ----------
 drop policy if exists group_memberships_select on public.group_memberships;
@@ -447,14 +470,36 @@ set search_path = app, pg_temp
 as $$
 declare
   v_profile app.profiles;
+  v_existing app.profiles;
+  v_role app.user_role := p_role::app.user_role;
 begin
-  insert into app.profiles (user_id, full_name, role, status, phone_e164, student_code)
-  values (p_user_id, p_full_name, p_role::app.user_role, p_status::app.account_status, p_phone, p_code)
-  on conflict (user_id) do update
-    set full_name = excluded.full_name,
-        status = excluded.status,
+  select * into v_existing from app.profiles where user_id = p_user_id;
+
+  if found then
+    -- F-01: الإيقاف والأرشفة لا يُرفعان بقبول دعوة. حساب موقوف يبقى موقوفًا ويُرفض.
+    if v_existing.status in ('suspended', 'archived') then
+      raise exception 'ACCOUNT_DISABLED' using errcode = '28000';
+    end if;
+    -- F-01/F-02: لا خلط أدوار — دعوة مدرس لحساب طالب (أو العكس) تُرفض ولا تُستهلك.
+    if v_existing.role <> v_role then
+      raise exception 'ROLE_MISMATCH' using errcode = '42501';
+    end if;
+
+    update app.profiles
+    set full_name = p_full_name,
+        -- لا تُفرض active على هوية قائمة: فقط pending تُفعَّل.
+        status = case
+          when v_existing.status = 'pending' then 'active'::app.account_status
+          else v_existing.status
+        end,
         updated_at = now()
-  returning * into v_profile;
+    where user_id = p_user_id
+    returning * into v_profile;
+  else
+    insert into app.profiles (user_id, full_name, role, status, phone_e164, student_code)
+    values (p_user_id, p_full_name, v_role, p_status::app.account_status, p_phone, p_code)
+    returning * into v_profile;
+  end if;
 
   if v_profile.role = 'teacher' then
     insert into app.teachers (teacher_id) values (v_profile.user_id)
@@ -470,7 +515,62 @@ begin
 end;
 $$;
 
--- ربط ملف طالب قائم بحساب (مرة واحدة فقط)
+-- F-03: قبول الدعوة في معاملة واحدة — الاستهلاك والهوية والربط معًا.
+-- أي رفض (دعوة منتهية/مستخدمة/لغرض آخر، أو حساب موقوف) يلغي الاستهلاك تلقائيًا،
+-- فلا تُحرق دعوة صالحة بسبب فشل لاحق.
+create or replace function public.svc_accept_invitation(
+  p_token_hash text,
+  p_kind text,
+  p_user_id uuid,
+  p_full_name text,
+  p_phone text default null,
+  p_code text default null
+)
+returns jsonb
+language plpgsql
+security definer
+set search_path = app, pg_temp
+as $$
+declare
+  v_invite app.invitations;
+  v_profile jsonb;
+  v_link jsonb;
+  v_role text;
+begin
+  if p_kind is null or p_kind not in ('teacher_invite', 'student_link') then
+    raise exception 'invitation-wrong-kind' using errcode = '22023';
+  end if;
+  v_role := case p_kind when 'teacher_invite' then 'teacher' else 'student' end;
+
+  if p_full_name is null or btrim(p_full_name) = '' then
+    raise exception 'invalid-full-name' using errcode = '22023';
+  end if;
+
+  v_invite := app.consume_invitation(p_token_hash, p_kind::app.invitation_kind, p_user_id);
+  v_profile := public.svc_accept_identity(p_user_id, p_full_name, v_role, p_phone, p_code, 'active');
+
+  if p_kind = 'student_link' then
+    if v_invite.student_profile_id is null then
+      raise exception 'invitation-wrong-kind' using errcode = '22023';
+    end if;
+    v_link := public.svc_link_student_profile(v_invite.student_profile_id, p_user_id);
+  else
+    v_link := null;
+  end if;
+
+  return jsonb_build_object(
+    'kind', v_invite.kind,
+    'teacher_id', v_invite.teacher_id,
+    'student_profile_id', v_invite.student_profile_id,
+    'profile', v_profile,
+    'linked', v_link
+  );
+end;
+$$;
+
+comment on function public.svc_accept_invitation(text, text, uuid, text, text, text) is
+  'المسار الوحيد لقبول الدعوات: استهلاك + هوية + ربط في معاملة واحدة (F-03)، مع رفض الحساب الموقوف وخلط الأدوار (F-01).';
+
 create or replace function public.svc_link_student_profile(p_student_profile_id uuid, p_user_id uuid)
 returns jsonb
 language plpgsql
@@ -545,6 +645,7 @@ revoke all on function public.svc_profile_context(uuid) from public, anon, authe
 revoke all on function public.svc_workspaces(uuid) from public, anon, authenticated;
 revoke all on function public.svc_invitation_state(text) from public, anon, authenticated;
 revoke all on function public.svc_accept_identity(uuid, text, text, text, text, text) from public, anon, authenticated;
+revoke all on function public.svc_accept_invitation(text, text, uuid, text, text, text) from public, anon, authenticated;
 revoke all on function public.svc_link_student_profile(uuid, uuid) from public, anon, authenticated;
 revoke all on function public.svc_create_recovery_token(uuid, text, uuid, text, timestamptz) from public, anon, authenticated;
 revoke all on function public.svc_recovery_target(uuid, text) from public, anon, authenticated;
@@ -553,6 +654,7 @@ grant execute on function public.svc_profile_context(uuid) to service_role;
 grant execute on function public.svc_workspaces(uuid) to service_role;
 grant execute on function public.svc_invitation_state(text) to service_role;
 grant execute on function public.svc_accept_identity(uuid, text, text, text, text, text) to service_role;
+grant execute on function public.svc_accept_invitation(text, text, uuid, text, text, text) to service_role;
 grant execute on function public.svc_link_student_profile(uuid, uuid) to service_role;
 grant execute on function public.svc_create_recovery_token(uuid, text, uuid, text, timestamptz) to service_role;
 grant execute on function public.svc_recovery_target(uuid, text) to service_role;
@@ -620,16 +722,38 @@ select
   sp.linked_at
 from app.student_profiles sp
 where app.is_workspace_teacher(sp.teacher_id)
-   or app.assistant_can(sp.teacher_id, 'students:read', null);
+   or app.assistant_can_see_student(sp.id, 'students:read');
 
 comment on view public.my_students is
   'طلاب المساحة للمدرس/المساعد فقط. لا تُعرض هنا ملفات طلاب مدرس آخر.';
 
+-- F-04: واجهة متابعة إدارية للقراءة فقط (مخطط app غير مكشوف، فالإدارة تحتاج مدخلًا).
+-- الصفوف محكومة بسياسة student_profiles_select_admin ⇒ المدرس/المساعد يرى صفرًا هنا.
+create or replace view public.admin_students
+with (security_invoker = true) as
+select
+  sp.id,
+  sp.teacher_id,
+  tp.full_name as teacher_name,
+  sp.full_name,
+  sp.local_code,
+  sp.grade,
+  sp.status,
+  sp.linked_at,
+  sp.created_at
+from app.student_profiles sp
+join app.profiles tp on tp.user_id = sp.teacher_id
+where app.is_super_admin();
+
+comment on view public.admin_students is
+  'متابعة إدارية للقراءة فقط: كل ملفات الطلاب مع اسم المدرس. غير قابلة للكتابة ولا تُرجع صفوفًا لغير السوبر أدمن.';
+
 grant select on public.me to authenticated;
 grant select on public.my_workspaces to authenticated;
 grant select on public.my_students to authenticated;
+grant select on public.admin_students to authenticated;
 
-revoke all on public.me, public.my_workspaces, public.my_students from anon;
+revoke all on public.me, public.my_workspaces, public.my_students, public.admin_students from anon;
 
 insert into app.schema_meta (key, value)
 values (
