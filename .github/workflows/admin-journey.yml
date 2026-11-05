@@ -115,14 +115,17 @@ jobs:
           echo "البصمة المتوقعة: ${stamp}"
           bad=0
           for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
-            body=$(curl -sS --max-time 30 \
+            # الجسم قد يكون مضغوطًا أو ثنائيًا: يُحفظ في ملف ويُفحص بـgrep -a
+            # (substitution في الصدفة يُسقط البايتات الصفرية فيُفسد المقارنة).
+            http=$(curl --compressed -sS --max-time 30 -o /tmp/fn.bin -w '%{http_code}' \
               -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-              "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || true)
-            if printf '%s' "$body" | grep -q "FUNCTION_BUILD = '${stamp}'"; then
+              "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || echo 000)
+            if [ "$http" = "200" ] && grep -qa "FUNCTION_BUILD = '${stamp}'" /tmp/fn.bin; then
               echo "PASS · المنشور ${name} = ${stamp}"
             else
-              found=$(printf '%s' "$body" | grep -o "FUNCTION_BUILD = '[^']*'" | head -1)
-              echo "::error::الدالة ${name} المنشورة ليست كود هذا الالتزام (متوقع ${stamp} · وُجد: ${found:-لا بصمة})"
+              found=$(grep -ao "FUNCTION_BUILD = '[^']*'" /tmp/fn.bin | head -1)
+              echo "::error::الدالة ${name} ليست كود هذا الالتزام (HTTP ${http} · متوقع ${stamp} · وُجد: ${found:-لا بصمة})"
+              if [ "$http" != "200" ]; then head -c 200 /tmp/fn.bin | tr -d '\000' || true; echo; fi
               bad=1
             fi
           done
