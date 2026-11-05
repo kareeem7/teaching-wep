@@ -17,6 +17,10 @@ export const LIMITS = Object.freeze({
   // لكن الحدّ يمنع الإغراق ويجعل السياسة مطبَّقة لا موثَّقة فقط.
   'recovery:complete': { limit: 10, windowSeconds: 60 * 60 },
   'workspace:session': { limit: 60, windowSeconds: 60 },
+  // المرحلة ٠٣: قرارات إدارية. الحدود هنا دفاع ثانٍ بعد حدّ SQL داخل الدالة نفسها.
+  'admin:invite': { limit: 10, windowSeconds: 60 * 60 },
+  'admin:status': { limit: 30, windowSeconds: 60 * 60 },
+  'admin:instruction': { limit: 20, windowSeconds: 60 * 60 },
 });
 
 /** بداية النافذة الحالية (تُستخدم كمفتاح تخزين مع مفتاح العدّاد). */

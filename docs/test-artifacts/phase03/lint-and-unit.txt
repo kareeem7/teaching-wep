@@ -1,0 +1,33 @@
+== أوامر الفحص المحلية — المرحلة ٠٣ ==
+التاريخ: 2026-11-05T09:48:41Z · الفرع: arena/f53b657b-teaching-wep
+
+-- npm run lint (eslint + stylelint + htmlhint) --
+> htmlhint "public/**/*.html"
+
+
+   Config loaded: /home/user/teaching-wep/.htmlhintrc
+
+Scanned 15 files, no errors found (35 ms).
+exit=0
+-- node --test --
+# tests 85
+# pass 85
+# fail 0
+# skipped 0
+-- pglast (تحقق نحوي) --
+supabase/migrations/0001_extensions.sql 13
+supabase/migrations/0002_identity_profiles.sql 24
+supabase/migrations/0003_teacher_workspaces.sql 35
+supabase/migrations/0004_invitations_recovery.sql 28
+supabase/migrations/0005_rls_identity.sql 144
+supabase/migrations/0006_admin_audit_notifications.sql 39
+supabase/migrations/0007_rls_admin.sql 72
+tests/sql/admin_rls.test.sql 81
+tests/sql/identity_rls.test.sql 102
+tests/sql/phase02_regression.test.sql 30
+-- playwright --list --
+Total: 110 tests in 5 files
+
+ملاحظة: تنزيل Chromium محجوب في هذه البيئة (L-29):
+  npx playwright install chromium ⇒ Download failure, code=1
+لذلك اختبارات المتصفح لم تُنفَّذ محليًا، وعوّضها jsdom في tests/unit/dom-shell.test.js.

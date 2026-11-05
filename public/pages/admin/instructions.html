@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="تعليمات داخلية من الإدارة إلى المدرسين. المستلمون يُحسبون على الخادم، ولا تصله لطلاب أو خارج النطاق.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.3.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — التعليمات الداخلية</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="admin-instructions" data-requires-auth="true" data-role-label="لوحة الإدارة">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <div class="app-shell">
+    <div data-component="sidebar"></div>
+
+    <div class="app-main">
+      <main id="main" class="app-content">
+        <h1>التعليمات الداخلية</h1>
+
+        <div class="alert alert-info" role="status">
+          التعليمات تصل <strong>للمدرسين النشطين فقط</strong>. لا تصله لطالب، ولا لمدرس موقوف،
+          ولا لأي حساب خارج النطاق — والقرار يُتخذ على الخادم لا في هذه الصفحة.
+        </div>
+
+        <p class="text-danger-mh" data-admin-error role="alert" hidden></p>
+
+        <section class="card-mh" aria-labelledby="send-heading">
+          <h2 class="card-mh__title" id="send-heading">إرسال تعليم</h2>
+
+          <form data-form="send-instruction" novalidate>
+            <div class="field">
+              <label class="field__label" for="instruction-title">العنوان</label>
+              <input class="field__control" id="instruction-title" name="title" type="text"
+                     minlength="3" maxlength="120" required>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="instruction-body">النص</label>
+              <textarea class="field__control" id="instruction-body" name="body" rows="5"
+                        minlength="5" maxlength="2000" required></textarea>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="instruction-audience">المستلمون</label>
+              <select class="field__control" id="instruction-audience" name="audience" data-audience>
+                <option value="all_teachers">كل المدرسين النشطين</option>
+                <option value="teachers">مدرسون محددون</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="field__label" for="instruction-teachers">اختر المدرسين</label>
+              <select class="field__control" id="instruction-teachers" data-teachers-picker
+                      multiple size="6" hidden disabled></select>
+              <p class="field__hint">اضغط Ctrl (أو Cmd) لاختيار أكثر من مدرس. الحد الأقصى ٢٠٠ مستلم.</p>
+            </div>
+
+            <p class="text-danger-mh" data-form-error role="alert" hidden></p>
+            <div class="d-flex align-items-center gap-3">
+              <button class="btn-mh" type="submit" data-action="send-instruction">إرسال</button>
+              <span class="text-muted-mh" data-recipients-preview></span>
+            </div>
+          </form>
+
+          <div class="alert alert-success mt-3" data-send-result role="status" hidden></div>
+        </section>
+
+        <section class="card-mh" aria-labelledby="sent-heading">
+          <h2 class="card-mh__title" id="sent-heading">التعليمات المرسلة</h2>
+          <div class="table-responsive">
+            <table class="table align-middle mb-0">
+              <caption class="visually-hidden-mh">التعليمات مع عدد من قرأها وعدد المستلمين</caption>
+              <thead>
+                <tr>
+                  <th scope="col">العنوان</th>
+                  <th scope="col">المستلمون</th>
+                  <th scope="col">قرأه / أُرسل</th>
+                  <th scope="col">وقت الإرسال</th>
+                </tr>
+              </thead>
+              <tbody data-instructions-body></tbody>
+            </table>
+          </div>
+          <p class="text-muted-mh mt-3 mb-0">
+            «قرأه» يزيد فقط عندما يفتح المدرس صندوق تنبيهاته. الإرسال لا يُعدّ قراءة.
+          </p>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        مِنهاج · الإصدار 0.3.0 · <span class="tnum" data-current-year></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

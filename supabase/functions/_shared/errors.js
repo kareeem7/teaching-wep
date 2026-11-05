@@ -119,6 +119,26 @@ export function logError(scope, error, context = {}) {
   console.error(JSON.stringify(payload));
 }
 
+/**
+ * يحوّل خطأ PostgREST/SQL إلى خطأ API برمز مفهوم، بلا تمرير نص قاعدة البيانات للمتصفح.
+ * الشفرة `code` هنا هي SQLSTATE التي ترفعها دوال app.admin_* في المهاجرة 0006.
+ * @param {{status?: number, body?: any}|null|undefined} error
+ */
+export function apiErrorFromDb(error) {
+  const sqlState = error?.body?.code ?? error?.code ?? null;
+  const map = {
+    '42501': 'FORBIDDEN',
+    '22023': 'INVALID_INPUT',
+    '22P02': 'INVALID_INPUT',
+    '23405': 'DUPLICATE_ACCOUNT',
+    '23505': 'DUPLICATE_ACCOUNT',
+    '42900': 'RATE_LIMITED',
+    P0002: 'INVITATION_INVALID',
+  };
+  const code = map[String(sqlState)] ?? 'UPSTREAM_UNAVAILABLE';
+  return apiError(code, { details: 'db:' + String(sqlState ?? 'unknown') });
+}
+
 /** معرّف طلب قصير لتتبع الطلب في السجل والتقرير. */
 export function newRequestId() {
   const bytes = new Uint8Array(8);

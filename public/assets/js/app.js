@@ -124,11 +124,20 @@ export async function bootstrap() {
     ],
   });
   if (doc.body.dataset.roleLabel) {
+    const page = doc.body.dataset.page ?? '';
+    const isAdmin = page.startsWith('admin-');
     renderSidebar({
       title: doc.body.dataset.roleLabel,
-      links: [
-        { label: 'الرئيسية', href: `${base}index.html`, current: true },
-      ],
+      links: isAdmin
+        ? [
+            { label: 'نظرة عامة', href: `${base}pages/admin/dashboard.html`, current: page === 'admin-dashboard' },
+            { label: 'المدرسون', href: `${base}pages/admin/teachers.html`, current: page === 'admin-teachers' || page === 'admin-teacher-detail' },
+            { label: 'التعليمات', href: `${base}pages/admin/instructions.html`, current: page === 'admin-instructions' },
+            { label: 'الرئيسية', href: `${base}index.html` },
+          ]
+        : [
+            { label: 'الرئيسية', href: `${base}index.html`, current: true },
+          ],
     });
   }
 
@@ -138,6 +147,7 @@ export async function bootstrap() {
   // حالة فارغة صريحة بدل مساحة بيضاء توهم بوجود بيانات
   qsa('[data-empty-host]', doc).forEach((host) => {
     if (host.dataset.filled === 'true') return;
+    if ((doc.body.dataset.page ?? '').startsWith('admin-')) return;
     host.append(renderEmptyState({
       title: 'لا بيانات بعد',
       text: 'هذا تخطيط فارغ. الطلاب والمجموعات والحضور تبدأ في المرحلتين ٠٤ و٠٥.',
@@ -207,6 +217,26 @@ export async function initPage(doc = document) {
     const { initResetPasswordPage } = await import('./auth.js');
     initResetPasswordPage();
     return 'reset-password';
+  }
+  if (page === 'admin-dashboard') {
+    const { initAdminDashboardPage } = await import('./admin/dashboard.js');
+    await initAdminDashboardPage();
+    return 'admin-dashboard';
+  }
+  if (page === 'admin-teachers') {
+    const { initAdminTeachersPage } = await import('./admin/teachers.js');
+    await initAdminTeachersPage();
+    return 'admin-teachers';
+  }
+  if (page === 'admin-teacher-detail') {
+    const { initAdminTeacherDetailPage } = await import('./admin/teachers.js');
+    await initAdminTeacherDetailPage();
+    return 'admin-teacher-detail';
+  }
+  if (page === 'admin-instructions') {
+    const { initAdminInstructionsPage } = await import('./admin/instructions.js');
+    await initAdminInstructionsPage();
+    return 'admin-instructions';
   }
   if (page === 'select-workspace') {
     const [{ initSelectWorkspacePage }, { currentSession }] = await Promise.all([

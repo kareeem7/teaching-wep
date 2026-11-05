@@ -8,6 +8,8 @@ export default [
       'public/assets/vendor/**',
       'test-results/**',
       'playwright-report/**',
+      // حزم دوال Edge المُولَّدة (R-38): مبنية من مصدر مُفحوص، ولا تُراجع كملف يدوي
+      'supabase/.bundles/**',
     ],
   },
   js.configs.recommended,
@@ -51,6 +53,16 @@ export default [
       sourceType: 'module',
       globals: { ...globals.node, ...globals.browser },
     },
+  },
+  {
+    // أدوات البناء المحلية (Node)
+    files: ['scripts/**/*.mjs'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.node },
+    },
+    rules: { 'no-console': 'off' },
   },
   {
     // اختبارات وحدات وملفات الإعداد (Node فقط)

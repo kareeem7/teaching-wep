@@ -1,0 +1,32 @@
+== شجرة ملفات المرحلة ٠٣ (من git) ==
+ M public/assets/css/app.css
+ M public/assets/js/api.js
+ M public/assets/js/app.js
+ M public/assets/js/auth-guard.js
+ M supabase/functions/_shared/auth.js
+ M supabase/functions/_shared/errors.js
+ M supabase/functions/_shared/rate-limit.js
+ M tests/unit/dom-shell.test.js
+ M tests/unit/functions.test.js
+?? docs/test-artifacts/phase03/
+?? public/assets/js/admin/
+?? public/pages/admin/
+?? supabase/functions/_shared/audit.js
+?? supabase/functions/admin-instructions/
+?? supabase/functions/admin-teachers/
+?? supabase/migrations/0006_admin_audit_notifications.sql
+?? supabase/migrations/0007_rls_admin.sql
+?? tests/e2e/admin-readonly.spec.js
+?? tests/e2e/admin-teachers.spec.js
+?? tests/sql/admin_rls.test.sql
+
+-- الملفات المتتبَّعة الجديدة/المعدّلة --
+M	public/assets/css/app.css
+M	public/assets/js/api.js
+M	public/assets/js/app.js
+M	public/assets/js/auth-guard.js
+M	supabase/functions/_shared/auth.js
+M	supabase/functions/_shared/errors.js
+M	supabase/functions/_shared/rate-limit.js
+M	tests/unit/dom-shell.test.js
+M	tests/unit/functions.test.js

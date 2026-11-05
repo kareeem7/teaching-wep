@@ -351,6 +351,34 @@ export async function requireSession(db, token) {
   return { userId: data.user.id, issuedAt, claims };
 }
 
+/**
+ * يتحقق أن صاحب الجلسة سوبر أدمن **نشط** — بقرار من قاعدة البيانات لا من الـJWT.
+ * ملاحظة: الدور داخل الـJWT قد يكون قديمًا، ولذلك نقرأ `app.profiles` عبر دالة الخدمة.
+ * @param {{auth: {getUser: Function}, rpc: Function}} db
+ * @param {string|null} token
+ */
+export async function requireSuperAdmin(db, token) {
+  const session = await requireSession(db, token);
+  const { data, error } = await db.rpc('svc_profile_context', { p_user_id: session.userId });
+  if (error) throw apiError('UPSTREAM_UNAVAILABLE', { details: 'profile-context' });
+
+  // الهوية معروفة حتى عند الرفض: نرفقها بالخطأ ليُدقَّق الرفض بفاعله الحقيقي (F-22).
+  const deny = (code, details) => {
+    const error = apiError(code, { details });
+    error.actorUserId = session.userId;
+    throw error;
+  };
+
+  const profile = Array.isArray(data) ? data[0] : data;
+  if (!profile || typeof profile !== 'object' || profile.user_id === null || profile.user_id === undefined) {
+    deny('FORBIDDEN', 'no-profile');
+  }
+  if (profile.role !== 'super_admin') deny('FORBIDDEN', 'not-admin');
+  if (profile.status !== 'active') deny('ACCOUNT_DISABLED', 'admin-inactive');
+
+  return { ...session, profile };
+}
+
 /** يستخرج رمز Bearer من الرأس. */
 export function bearerToken(request) {
   const header = request.headers.get('authorization');

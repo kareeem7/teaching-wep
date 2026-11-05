@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+  <meta charset="utf-8" />
+  <title>فحص auth-login — بيئة الاختبار</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; max-width: 40rem; }
+    label { display: block; margin: .75rem 0 .25rem; }
+    input, button { padding: .5rem; font: inherit; width: 100%; box-sizing: border-box; }
+    pre { background: #0f172a; color: #e2e8f0; padding: 1rem; overflow: auto; direction: ltr; text-align: left; }
+    .hint { color: #555; font-size: .9rem; }
+  </style>
+  <h1>فحص دالة الدخول</h1>
+  <p class="hint">
+    يجب تقديم هذه الصفحة من <code>http://localhost:4173</code> (أو <code>http://127.0.0.1:4173</code>)
+    لأن الخادم يرفض أي أصل خارج <code>APP_ALLOWED_ORIGINS</code>.
+  </p>
+
+  <label for="identifier">رقم الهاتف أو كود الطالب</label>
+  <input id="identifier" value="+201000000901" autocomplete="username" />
+
+  <label for="password">كلمة المرور</label>
+  <input id="password" type="password" value="TestPass!234" autocomplete="current-password" />
+
+  <label for="url">عنوان الدالة</label>
+  <input id="url" value="/functions/v1/auth-login" />
+
+  <p><button id="go">إرسال</button></p>
+  <pre id="out">لم يُنفَّذ شيء بعد.</pre>
+
+  <script type="module">
+    const BASE = 'https://wdqupfoznngqbyphjnie.supabase.co';
+    const out = document.getElementById('out');
+
+    function show(label, status, payload) {
+      const body = payload === undefined ? '' : JSON.stringify(payload, null, 2);
+      out.textContent = `${label}\nstatus = ${status}\n${body}`;
+    }
+
+    document.getElementById('go').addEventListener('click', async () => {
+      const path = document.getElementById('url').value.trim();
+      const target = path.startsWith('/') ? `${BASE}${path}` : path;
+      out.textContent = 'جارٍ الإرسال...';
+      try {
+        const response = await fetch(target, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({
+            identifier: document.getElementById('identifier').value.trim(),
+            password: document.getElementById('password').value,
+          }),
+        });
+        const text = await response.text();
+        let parsed;
+        try {
+          parsed = JSON.parse(text);
+        } catch {
+          parsed = text;
+        }
+        if (parsed && parsed.data && parsed.data.access_token) {
+          parsed.data.access_token = `${String(parsed.data.access_token).slice(0, 18)}…(محجوب)`;
+          parsed.data.refresh_token = parsed.data.refresh_token ? '(محجوب)' : null;
+        }
+        show('POST', response.status, parsed);
+      } catch (error) {
+        out.textContent = `فشل الشبكة: ${error}\n\n` +
+          'إن كان السبب CORS فالخادم لم يطابق الأصل. أضف أصل هذه الصفحة إلى APP_ALLOWED_ORIGINS.';
+      }
+    });
+  </script>
+</html>
