@@ -281,6 +281,30 @@ comment on function app.assistant_can_see_student(uuid, text) is
   'المساعد يرى/يعدّل ملف الطالب فقط إن كان ضمن مجموعة داخلة في نطاقه، أو نطاقه فارغ (كل المساحة).';
 
 
+-- F-17: كسر تكرار السياسات. سياسة public.groups كانت تقرأ public.group_memberships،
+-- وسياسة group_memberships تقرأ public.groups ⇒ 42P17 عند أي قراءة للمجموعات.
+-- الحل: فحص «هل الطالب في هذه المجموعة؟» داخل دالة SECURITY DEFINER لا تمرّ على RLS.
+create or replace function app.student_in_group(target_group_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = app, pg_temp
+as $$
+  select app.is_active() and exists (
+    select 1
+    from public.group_memberships gm
+    join app.student_profiles sp on sp.id = gm.student_profile_id
+    where gm.group_id = target_group_id
+      and gm.left_at is null
+      and sp.user_id = auth.uid()
+      and sp.status = 'active'
+  );
+$$;
+
+comment on function app.student_in_group(uuid) is
+  'هل الطالب الحالي عضو ساري في هذه المجموعة؟ تُستخدم في سياسة groups لتفادي تكرار السياسات (F-17).';
+
 create or replace function app.student_profile_of_current_user(target_teacher_id uuid)
 returns uuid
 language sql

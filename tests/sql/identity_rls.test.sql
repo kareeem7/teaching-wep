@@ -31,16 +31,15 @@ values
   ('55555555-5555-5555-5555-555555555555', '+201000000005', now(), '{"provider":"phone"}', '{}'),
   ('99999999-9999-9999-9999-999999999999', '+201000000009', now(), '{"provider":"phone"}', '{}');
 
-insert into app.profiles (user_id, full_name, role, status, phone_e164) values
-  ('11111111-1111-1111-1111-111111111111', 'مدرس أول', 'teacher', 'active', '+201000000001'),
-  ('22222222-2222-2222-2222-222222222222', 'مدرس ثانٍ', 'teacher', 'active', '+201000000002'),
-  ('33333333-3333-3333-3333-333333333333', 'مساعد محدود', 'assistant', 'active', '+201000000003'),
-  ('44444444-4444-4444-4444-444444444444', 'طالب عند الأول', 'student', 'active', null),
-  ('55555555-5555-5555-5555-555555555555', 'طالب عند الاثنين', 'student', 'active', null),
-  ('99999999-9999-9999-9999-999999999999', 'سوبر أدمن', 'super_admin', 'active', '+201000000009');
-
-update app.profiles set student_code = 'MH000001' where user_id = '44444444-4444-4444-4444-444444444444';
-update app.profiles set student_code = 'MH000002' where user_id = '55555555-5555-5555-5555-555555555555';
+-- F-16: القيد profiles_identifier_required يرفض طالبًا بلا هاتف وبلا كود،
+-- لذلك يُكتب الكود في نفس الإدراج لا بتحديث لاحق (التحديث اللاحق لا يُنفَّذ أصلًا).
+insert into app.profiles (user_id, full_name, role, status, phone_e164, student_code) values
+  ('11111111-1111-1111-1111-111111111111', 'مدرس أول', 'teacher', 'active', '+201000000001', null),
+  ('22222222-2222-2222-2222-222222222222', 'مدرس ثانٍ', 'teacher', 'active', '+201000000002', null),
+  ('33333333-3333-3333-3333-333333333333', 'مساعد محدود', 'assistant', 'active', '+201000000003', null),
+  ('44444444-4444-4444-4444-444444444444', 'طالب عند الأول', 'student', 'active', null, 'MH000001'),
+  ('55555555-5555-5555-5555-555555555555', 'طالب عند الاثنين', 'student', 'active', null, 'MH000002'),
+  ('99999999-9999-9999-9999-999999999999', 'سوبر أدمن', 'super_admin', 'active', '+201000000009', null);
 
 insert into app.teachers (teacher_id) values
   ('11111111-1111-1111-1111-111111111111'),
@@ -150,10 +149,13 @@ select is(
 -- =====================================================================
 --  ٣) طالب مرتبط بمدرسين: مساحتان، ولا انتقال صلاحيات
 -- =====================================================================
+-- F-18: دوال svc_* مغلقة عن authenticated بالتصميم (R-27)، فهذا الفحص يجب أن يعمل
+-- بدور الخادم لا بدور الطالب — وإلا صار «الرفض» نفسه هو ما يُقاس.
+reset role;
 select is(
   (select jsonb_array_length(public.svc_workspaces('55555555-5555-5555-5555-555555555555'))),
   2,
-  'الطالب المرتبط بمدرسين يرى مساحتين للاختيار'
+  'الطالب المرتبط بمدرسين يرى مساحتين للاختيار (عبر الخادم)'
 );
 select pg_temp.login_as('55555555-5555-5555-5555-555555555555');
 select is(
@@ -187,14 +189,14 @@ select throws_ok(
   null,
   'السوبر أدمن لا يملك كتابة أكاديمية (إنشاء مجموعة مرفوض)'
 );
+-- F-19: PostgreSQL يمنع CTE معدِّلة للبيانات داخل وسيط دالة، فالمحاولة تصير
+-- عبارة مستقلة ثم نتحقق من أن الصف لم يتغير (نفس المعنى، صياغة صحيحة).
+update app.student_profiles set full_name = 'تعديل إداري'
+where id = 'aaaaaaaa-0000-0000-0000-000000000001';
 select is(
-  (with u as (
-     update app.student_profiles set full_name = 'تعديل إداري'
-     where id = 'aaaaaaaa-0000-0000-0000-000000000001'
-     returning 1
-   ) select count(*)::int from u),
-  0,
-  'السوبر أدمن لا يعدّل ملف طالب (لا سياسة UPDATE ⇒ صفر صفوف لا استثناء)'
+  (select full_name from app.student_profiles where id = 'aaaaaaaa-0000-0000-0000-000000000001'),
+  'طالب عند الأول',
+  'السوبر أدمن لا يعدّل ملف طالب (لا سياسة UPDATE)'
 );
 
 -- =====================================================================
@@ -255,19 +257,18 @@ select is(
 --  ٧) لا وصول للجداول الحساسة من المتصفح
 -- =====================================================================
 select pg_temp.login_as('11111111-1111-1111-1111-111111111111');
-select is(
-  (select count(*)::int from app.invitations),
-  0,
-  'الدعوات لا تُقرأ من جلسة مستخدم (RLS بلا سياسة)'
+-- F-20: الحماية هنا على مستوى المنح لا السياسة: لا GRANT SELECT لـauthenticated
+-- أصلًا، فالتوقّع الصحيح خطأ 42501 لا «صفر صفوف». (السلوك المكتشف أقوى من المكتوب.)
+select throws_ok(
+  'select count(*) from app.invitations', '42501', null,
+  'الدعوات لا تُقرأ من جلسة مستخدم (لا منح أصلًا)'
 );
-select is(
-  (select count(*)::int from app.recovery_tokens),
-  0,
+select throws_ok(
+  'select count(*) from app.recovery_tokens', '42501', null,
   'رموز الاستعادة لا تُقرأ من جلسة مستخدم'
 );
-select is(
-  (select count(*)::int from app.rate_limits),
-  0,
+select throws_ok(
+  'select count(*) from app.rate_limits', '42501', null,
   'عدّادات حدّ المعدل غير مقروءة'
 );
 
@@ -306,9 +307,11 @@ select throws_ok(
   'نفس الدعوة تُرفض في المرة الثانية (استخدام واحد)'
 );
 
-insert into app.invitations (id, kind, token_hash, created_by, expires_at)
+-- F-21: القيد invitations_student_kind_needs_student يوجب ملف طالب لدعوة الربط.
+insert into app.invitations (id, kind, token_hash, student_profile_id, created_by, expires_at)
 values (
   'dddddddd-0000-0000-0000-000000000002', 'student_link', repeat('c', 64),
+  'aaaaaaaa-0000-0000-0000-000000000001',
   '99999999-9999-9999-9999-999999999999', now() + interval '1 hour'
 );
 select throws_ok(
@@ -318,13 +321,13 @@ select throws_ok(
   'دعوة ربط طالب تُرفض عند استخدامها كدعوة مدرس (نوع خاطئ)'
 );
 
-insert into app.invitations (id, kind, token_hash, created_by, expires_at)
+-- F-15c: التحديث إلى الماضي يخالف invitations_expiry_after_creation ⇒ نُنشئ دعوة منقضية أصلًا.
+insert into app.invitations (id, kind, token_hash, created_by, created_at, expires_at)
 values (
   'dddddddd-0000-0000-0000-000000000003', 'teacher_invite', repeat('d', 64),
-  '99999999-9999-9999-9999-999999999999', now() + interval '1 hour'
+  '99999999-9999-9999-9999-999999999999',
+  now() - interval '2 hours', now() - interval '1 hour'
 );
-update app.invitations set expires_at = now() - interval '1 minute'
-where id = 'dddddddd-0000-0000-0000-000000000003';
 select throws_ok(
   $$ select public.svc_consume_invitation(repeat('d', 64), 'teacher_invite', '99999999-9999-9999-9999-999999999999') $$,
   '22023',
@@ -361,9 +364,14 @@ select isnt(
 --  ١١) قبول الدعوة ذرّيًا: لا إحياء لحساب موقوف، ولا حرق لدعوة (F-01/F-03)
 -- =====================================================================
 reset role;
+-- F-15a: §٦ أعادت تفعيل هذا الحساب، فالإيقاف هنا شرط لاختبار F-01 لا افتراض.
+update app.profiles set status = 'suspended'
+where user_id = '44444444-4444-4444-4444-444444444444';
+
+-- F-15b: القيد student_profiles_active_requires_user يمنع 'active' بلا حساب ⇒ pending_link.
 insert into app.student_profiles (id, teacher_id, user_id, full_name, local_code, status)
 values ('aaaaaaaa-0000-0000-0000-000000000004', '11111111-1111-1111-1111-111111111111',
-        null, 'طالب بلا حساب', 'S4', 'active');
+        null, 'طالب بلا حساب', 'S4', 'pending_link');
 
 insert into app.invitations (id, kind, token_hash, student_profile_id, created_by, expires_at)
 values ('dddddddd-0000-0000-0000-000000000005', 'student_link', repeat('f', 64),
@@ -407,15 +415,17 @@ select is(
   1,
   'F-02: my_students يحترم النطاق نفسه'
 );
+update app.student_profiles set full_name = 'تعديل خارج النطاق'
+where id = 'aaaaaaaa-0000-0000-0000-000000000003';
+
+reset role;
 select is(
-  (with u as (
-     update app.student_profiles set full_name = 'تعديل خارج النطاق'
-     where id = 'aaaaaaaa-0000-0000-0000-000000000003'
-     returning 1
-   ) select count(*)::int from u),
-  0,
+  (select full_name from app.student_profiles where id = 'aaaaaaaa-0000-0000-0000-000000000003'),
+  'طالب عند الاثنين',
   'F-02: المساعد لا يعدّل طالبًا خارج نطاقه حتى بصلاحية students:write'
 );
+
+select pg_temp.login_as('33333333-3333-3333-3333-333333333333');
 select throws_ok(
   $$ insert into app.student_profiles (teacher_id, full_name, local_code)
      values ('11111111-1111-1111-1111-111111111111', 'خارج النطاق', 'S5') $$,
@@ -428,11 +438,10 @@ select throws_ok(
 --  ١٣) لا حذف نهائي لمجموعة (F-05)
 -- =====================================================================
 select pg_temp.login_as('11111111-1111-1111-1111-111111111111');
+delete from public.groups where id = 'cccccccc-0000-0000-0000-000000000001';
 select is(
-  (with d as (
-     delete from public.groups where id = 'cccccccc-0000-0000-0000-000000000001' returning 1
-   ) select count(*)::int from d),
-  0,
+  (select count(*)::int from public.groups),
+  1,
   'F-05: المدرس لا يحذف مجموعة حذفًا نهائيًا (الأرشفة بدل الحذف)'
 );
 select is(

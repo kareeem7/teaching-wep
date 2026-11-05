@@ -1,0 +1,45 @@
+== تشغيل اختبارات العزل على PostgreSQL حقيقي (أول تنفيذ فعلي) ==
+التاريخ (UTC): 2026-11-05T06:5x
+البيئة: مشروع Supabase للاختبار  ref = wdqupfoznngqbyphjnie  (منطقة eu-central-1)
+        عبر Supabase Management API (SQL) — لا psql محليًا ولا Docker.
+        PROJECT clinicv2 لم يُلمس.
+
+== المهاجرات المطبَّقة (بالترتيب) ==
+repo_0001_extensions · repo_0002_identity_profiles · repo_0003_teacher_workspaces
+repo_0004_invitations_recovery · repo_0005_rls_identity · fix_f17_groups_policy_recursion
+الحالة بعد التطبيق:
+  جداول app            : 10
+  جداول public         : 2  (groups, group_memberships)
+  RLS مُفعَّلة          : 12 من 12
+  سياسات              : 28
+  دوال svc_*          : 13
+  عروض القراءة        : 4  (me, my_workspaces, my_students, admin_students)
+
+== نتيجة تشغيل tests/sql/identity_rls.test.sql ==
+plan(51) · نُفِّذت 51 · فشلت 0  ⇒  51/51
+الدليل: `select jsonb_agg(x) from (select * from finish()) x` أعاد NULL (صفر صفوف)،
+ودلالة ذلك مُثبتة بحقنة تحكم: خطة من اختبارين أحدهما فاشل أعادت
+"# Looks like you failed 1 test of 2". أي أن غياب الصفوف = لا فشل ولا اختلاف في العدد.
+
+== ملاحظة على البيانات ==
+التشغيل جرى داخل معاملة (begin) ولم تُثبَّت. تحقّق بعد التشغيل:
+  auth.users = 0 · app.profiles = 0 · student_profiles = 0 · public.groups = 0
+  app.invitations = 0 · app.rate_limits = 0 · app.audit_events = 0
+أي: صفر بيانات اصطناعية باقية، وصفر بيانات حقيقية أُدخلت في أي وقت.
+
+== عيوب كشفها التشغيل الفعلي (لم يكشفها الفحص النحوي ولا المراجعة) ==
+F-17 (المنتج): 42P17 infinite recursion in policy for relation "groups"
+     السبب: سياسة groups تقرأ group_memberships وسياستها تقرأ groups.
+     الأثر: أي قراءة للمجموعات من مستخدم مسجَّل تنهار — وظيفة أساسية معطّلة.
+     الإصلاح: app.student_in_group(uuid) (SECURITY DEFINER) + سياسة بلا استعلام متبادل.
+F-15 (الاختبار): ثلاثة افتراضات خاطئة في القسم ١١ (حساب أُعيد تفعيله، ملف active بلا حساب،
+     تحديث انتهاء إلى الماضي يخالف قيدًا).
+F-16 (الاختبار): إدراج طالب بلا هاتف وبلا كود يخالف profiles_identifier_required.
+F-18 (الاختبار): نداء svc_workspaces بجلسة authenticated بينما هي مغلقة بالتصميم.
+F-19 (الاختبار): CTE معدِّلة للبيانات داخل وسيط is() — يمنعها PostgreSQL.
+F-20 (الاختبار): توقّع «صفر صفوف» على app.invitations؛ الحقيقة 42501 (لا منح أصلًا) — حماية أقوى.
+F-21 (الاختبار): دعوة student_link بلا student_profile_id تخالف قيدًا.
+
+== ما لم يُنفَّذ ==
+- نشر الدوال الأربع: تتطلب تجميعًا (bundling) للوحدات المشتركة، وهو قرار بنية لم يُعتمد بعد.
+- فحص متصفح يدوي مع خادم حقيقي (لا جلسات حقيقية بلا دوال منشورة).

@@ -42,6 +42,7 @@ grant execute on function app.is_workspace_member(uuid) to authenticated;
 grant execute on function app.is_workspace_teacher(uuid) to authenticated;
 grant execute on function app.assistant_can(uuid, text, uuid) to authenticated;
 grant execute on function app.student_profile_of_current_user(uuid) to authenticated;
+grant execute on function app.student_in_group(uuid) to authenticated;
 
 -- UPDATE عمودي: الاسم فقط. الدور والمعرّفات محمية بحراسة 0002.
 grant select (user_id, full_name, role, status, phone_e164, student_code, sessions_valid_after, created_at, updated_at)
@@ -207,16 +208,9 @@ create policy groups_select_member on public.groups
   using (
     app.is_workspace_member(teacher_id)
     or app.assistant_can(teacher_id, 'groups:read', id)
-    or exists (
-      select 1
-      from public.group_memberships gm
-      join app.student_profiles sp on sp.id = gm.student_profile_id
-      where gm.group_id = public.groups.id
-        and gm.left_at is null
-        and sp.user_id = auth.uid()
-        and sp.status = 'active'
-        and app.is_active()
-    )
+    -- F-17: عبر دالة SECURITY DEFINER — الاستعلام المباشر كان يسبب 42P17
+    -- (سياسة groups تقرأ group_memberships وسياستها تقرأ groups).
+    or app.student_in_group(id)
   );
 
 drop policy if exists groups_write_teacher on public.groups;
