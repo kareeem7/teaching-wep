@@ -101,6 +101,33 @@ jobs:
           done
           echo "::notice::تم إرسال الدوال الست."
 
+      # F-43: النشر الذي «ينجح» بلا أثر هو أسوأ أنواع الفشل. هذا الفحص يقرأ كود
+      # الدالة كما هو منشور فعلًا من Management API ويقارن بصمة البناء بالالتزام.
+      - name: التحقق من أن المنشور هو كود هذا الالتزام (F-43)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          REF: ${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -uo pipefail
+          exec > >(tee -a /tmp/journey.log) 2>&1
+          stamp="${SHA:0:12}"
+          echo "البصمة المتوقعة: ${stamp}"
+          bad=0
+          for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
+            body=$(curl -sS --max-time 30 \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || true)
+            if printf '%s' "$body" | grep -q "FUNCTION_BUILD = '${stamp}'"; then
+              echo "PASS · المنشور ${name} = ${stamp}"
+            else
+              found=$(printf '%s' "$body" | grep -o "FUNCTION_BUILD = '[^']*'" | head -1)
+              echo "::error::الدالة ${name} المنشورة ليست كود هذا الالتزام (متوقع ${stamp} · وُجد: ${found:-لا بصمة})"
+              bad=1
+            fi
+          done
+          exit $bad
+
       - name: الرحلة الكاملة عبر HTTP
         env:
           # F-43: الرحلة تقارن بصمة الدوال المنشورة بهذا الالتزام وترفض النشر القديم

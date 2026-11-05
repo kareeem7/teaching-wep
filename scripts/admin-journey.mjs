@@ -83,7 +83,7 @@ async function probeBuilds() {
       headers: json(),
       body: '{}',
     });
-    found[name] = response.build ?? null;
+    found[name] = response.build ?? response.body?.build ?? null;
   }
   return found;
 }
@@ -214,6 +214,19 @@ async function main() {
   } else {
     record('بصمة كود الدوال المنشور', false, { builds, distinct: uniqueBuilds, reason: 'بصمات مختلفة بين الدوال' });
   }
+
+  // ١.٦) تصفير عدّادات الحد: فحص متكرر يستهلك حدّ الدخول فيفشل بـ429 بلا عيب (F-45).
+  // الأداة service_role فقط (مهاجرة 0010) ولا تُستخدم في أي مسار مستخدم.
+  const resetLimits = await call('/rest/v1/rpc/svc_rate_limit_reset', {
+    method: 'POST',
+    headers: serviceJson(),
+    body: JSON.stringify({ p_prefix: null }),
+  });
+  record('تصفير عدّادات الحد قبل الرحلة', resetLimits.status === 200, {
+    status: resetLimits.status,
+    cleared: resetLimits.body ?? null,
+    code: resetLimits.body?.code ?? null,
+  });
 
   // ١) حسابات اصطناعية
   const admin = await seedUser({ phone: ADMIN_PHONE, password: ADMIN_PASSWORD });

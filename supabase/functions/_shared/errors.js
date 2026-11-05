@@ -91,6 +91,8 @@ export function toErrorResponse(error, { corsHeaders = {}, requestId = null, hea
       code: apiErr.code,
       message: apiErr.message,
       request_id: rid,
+      // F-43: البصمة في الجسم أيضًا — بعض البوابات تُسقط الترويسات المخصصة.
+      build: buildStamp(),
       // تفاصيل التشغيل (رموز داخلية مثل audience/recipients) لا تحمل سرًا،
       // وغيابها جعل تشخيص رفض 400/500 يستهلك محاولات كاملة (F-37).
       ...(apiErr.details === null || apiErr.details === undefined ? {} : { details: apiErr.details }),
