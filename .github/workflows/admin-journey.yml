@@ -71,7 +71,11 @@ jobs:
         run: npm run bundle:functions
 
       - name: نشر الدوال الست على بيئة الاختبار
-        if: ${{ inputs.deploy_functions != false }}
+        # F-46: كان الشرط `inputs.deploy_functions != false` — وفي حدث push تكون
+        # القيمة null، والمقارنة null != false تساوي false في تعابير GitHub،
+        # فتُتخطى الخطوة صامتةً ويبقى المنشور قديمًا. الآن: النشر إلزامي على push،
+        # وقابل للإلغاء صراحةً في التشغيل اليدوي.
+        if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
@@ -109,29 +113,27 @@ jobs:
           REF: ${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}
           SHA: ${{ github.sha }}
         run: |
-          set -o pipefail
-          # لا `exec >(tee)`: تُفقد المخرجات عند الخروج السريع، فتظهر الخطوة صامتة.
-          {
-            stamp="${SHA:0:12}"
-            echo "البصمة المتوقعة: ${stamp}"
-            bad=0
-            for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
-              # الجسم قد يكون مضغوطًا: يُحفظ في ملف ويُفحص بـgrep -a (الـsubstitution
-              # في الصدفة تُسقط البايتات الصفرية فتُفسد المقارنة).
-              http=$(curl --compressed -sS --max-time 30 -o /tmp/fn.bin -w '%{http_code}' \
-                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-                "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || echo 000)
-              size=$(wc -c </tmp/fn.bin 2>/dev/null || echo 0)
-              if [ "$http" = "200" ] && grep -qa "FUNCTION_BUILD = '${stamp}'" /tmp/fn.bin; then
-                echo "PASS · المنشور ${name} = ${stamp}"
-              else
-                found=$(grep -ao "FUNCTION_BUILD = '[^']*'" /tmp/fn.bin 2>/dev/null | head -1)
-                echo "::error::الدالة ${name} ليست كود هذا الالتزام (HTTP ${http} · ${size} بايت · متوقع ${stamp} · وُجد: ${found:-لا بصمة})"
-                bad=1
-              fi
-            done
-            exit $bad
-          } 2>&1 | tee -a /tmp/journey.log
+          set -uo pipefail
+          stamp="${SHA:0:12}"
+          : > /tmp/verify.log
+          bad=0
+          echo "البصمة المتوقعة: ${stamp}" >> /tmp/verify.log
+          for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
+            http=$(curl --compressed -sS --max-time 30 -o /tmp/fn.bin -w '%{http_code}' \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || echo 000)
+            size=$(wc -c </tmp/fn.bin 2>/dev/null || echo 0)
+            if [ "$http" = "200" ] && grep -qa "FUNCTION_BUILD = '${stamp}'" /tmp/fn.bin; then
+              echo "PASS · المنشور ${name} = ${stamp}" >> /tmp/verify.log
+            else
+              found=$(grep -ao "FUNCTION_BUILD = '[^']*'" /tmp/fn.bin 2>/dev/null | head -1)
+              echo "::error::الدالة ${name} ليست كود هذا الالتزام (HTTP ${http} · ${size} بايت · متوقع ${stamp} · وُجد: ${found:-لا بصمة})" >> /tmp/verify.log
+              bad=1
+            fi
+          done
+          cat /tmp/verify.log
+          cat /tmp/verify.log >> /tmp/journey.log
+          exit $bad
 
       - name: الرحلة الكاملة عبر HTTP
         env:
