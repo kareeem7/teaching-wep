@@ -54,41 +54,48 @@ async function call(path, init) {
   return { status: response.status, body };
 }
 
-const json = () => ({
+// مكالمات الدوال: verify_jwt=false ⇒ لا حاجة لـapikey إطلاقًا (وأي apikey خاطئ قد يرفضها البوابة).
+const json = () => ({ 'content-type': 'application/json' });
+
+// مكالمات الإدارة (GoTrue admin / PostgREST بمفتاح الخدمة): المفتاح نفسه apikey + Bearer.
+const serviceJson = () => ({
   'content-type': 'application/json',
-  apikey: ANON,
-  authorization: `Bearer ${ANON}`,
+  apikey: SERVICE,
+  authorization: `Bearer ${SERVICE}`,
 });
 
 /** ينشئ مستخدمًا اصطناعيًا عبر واجهة الإدارة (service_role، من CI فقط) ويضبط ملفه. */
 async function seedUser({ phone, password }) {
   const created = await call('/auth/v1/admin/users', {
     method: 'POST',
-    headers: { ...json(), authorization: `Bearer ${SERVICE}` },
+    headers: serviceJson(),
     body: JSON.stringify({ phone: phone.replace(/^\+/, ''), password, phone_confirm: true }),
   });
 
+  const createStatus = created.status;
+  const createError = created.status >= 400 ? created.body : null;
   let userId = created.body?.id ?? created.body?.user?.id;
   if (!userId) {
     // موجود من تشغيل سابق: نبحث عنه ثم نعيد تعيين كلمة المرور.
     const list = await call('/auth/v1/admin/users?page=1&per_page=200', {
       method: 'GET',
-      headers: { ...json(), authorization: `Bearer ${SERVICE}` },
+      headers: serviceJson(),
     });
     const wanted = phone.replace(/^\+/, '');
     const found = (list.body?.users ?? []).find((u) => String(u.phone ?? '').replace(/^\+/, '') === wanted);
     if (!found) {
       return {
         ok: false,
-        detail: 'تعذّر إنشاء المستخدم أو العثور عليه',
-        createStatus: created.status,
-        createError: created.body ?? null,
+        createStatus,
+        createError,
+        lookupStatus: list.status,
+        detail: Array.isArray(list.body?.users) ? 'المستخدم غير موجود في القائمة' : 'قائمة المستخدمين لم تُقرأ',
       };
     }
     userId = found.id;
     await call(`/auth/v1/admin/users/${userId}`, {
       method: 'PUT',
-      headers: { ...json(), authorization: `Bearer ${SERVICE}` },
+      headers: serviceJson(),
       body: JSON.stringify({ password, phone_confirm: true }),
     });
   }
@@ -97,13 +104,20 @@ async function seedUser({ phone, password }) {
   // فنقرأ حالة الملف عبر RPC الخدمي بدل الكتابة في مسار غير موجود.
   const context = await call('/rest/v1/rpc/svc_profile_context', {
     method: 'POST',
-    headers: { ...json(), authorization: `Bearer ${SERVICE}` },
+    headers: serviceJson(),
     body: JSON.stringify({ p_user_id: userId }),
   });
   const row = Array.isArray(context.body) ? context.body[0] : context.body;
   const hasProfile = Boolean(row?.user_id);
 
-  return { ok: Boolean(userId) && hasProfile, userId, profileStatus: context.status, hasProfile };
+  return {
+    ok: Boolean(userId) && hasProfile,
+    userId,
+    profileStatus: context.status,
+    hasProfile,
+    createStatus,
+    createError,
+  };
 }
 
 async function login(phone, password) {
@@ -139,12 +153,37 @@ async function main() {
     return;
   }
 
+  // ٠) فحص أولي: هل مفتاح الخدمة والمفتاح العام يعملان أصلًا؟
+  const adminProbe = await call('/auth/v1/admin/users?per_page=1', {
+    method: 'GET',
+    headers: serviceJson(),
+  });
+  record('مفتاح الخدمة يعمل (GoTrue admin)', adminProbe.status === 200, {
+    status: adminProbe.status,
+    code: adminProbe.body?.code ?? adminProbe.body?.error_code ?? null,
+    message: typeof adminProbe.body?.msg === 'string' ? adminProbe.body.msg.slice(0, 120) : null,
+    // بصمة غير حساسة: نوع المفتاح (JWT يبدأ eyJh · مفتاح جديد يبدأ sb_s) وطوله فقط
+    service_kind: `${SERVICE.slice(0, 4)}…/${SERVICE.length}`,
+    anon_kind: `${ANON.slice(0, 4)}…/${ANON.length}`,
+  });
+
+  const anonProbe = await call('/rest/v1/groups?select=id&limit=1', {
+    method: 'GET',
+    headers: { ...json(), apikey: ANON, authorization: `Bearer ${ANON}` },
+  });
+  record('المفتاح العام يعمل (PostgREST)', anonProbe.status === 200, {
+    status: anonProbe.status,
+    code: anonProbe.body?.code ?? null,
+  });
+
   // ١) حسابات اصطناعية
   const admin = await seedUser({ phone: ADMIN_PHONE, password: ADMIN_PASSWORD, role: 'super_admin', fullName: 'أدمن اختبار' });
   record('تهيئة حساب السوبر أدمن', admin.ok, {
     user_id: admin.userId ?? null,
     has_profile: admin.hasProfile ?? false,
-    message: admin.ok ? undefined : 'لا يوجد صف في app.profiles لهذا الهاتف — أنشئه أولًا',
+    create_status: admin.createStatus ?? null,
+    create_error: admin.createError ?? null,
+    lookup_status: admin.lookupStatus ?? null,
   });
   const teacher = await seedUser({ phone: TEACHER_PHONE, password: TEACHER_PASSWORD, role: 'teacher', fullName: 'مدرس اختبار' });
   record('تهيئة حساب المدرس', teacher.ok, {
@@ -183,7 +222,12 @@ async function main() {
   // ٤) محاولة كتابة أكاديمية بحساب السوبر أدمن — يجب أن تُرفض خادميًا
   const academicWrite = await call('/rest/v1/groups', {
     method: 'POST',
-    headers: { ...json(), authorization: `Bearer ${adminLogin.token}`, prefer: 'return=representation' },
+    headers: {
+      ...json(),
+      apikey: ANON,
+      authorization: `Bearer ${adminLogin.token}`,
+      prefer: 'return=representation',
+    },
     body: JSON.stringify([{ teacher_id: admin.userId, name: 'مجموعة غير مصرح بها', academic_year: '2026/2027' }]),
   });
   record('رفض الكتابة الأكاديمية بحساب الإدارة', academicWrite.status === 401 || academicWrite.status === 403, {
