@@ -64,8 +64,10 @@ export async function handler(request, deps = {}) {
     await enforceRateLimit(db, { route: 'login:ip', key: ipKey, nowMs });
     await enforceRateLimit(db, { route: 'login:identifier', key: idKey, nowMs });
 
+    // GoTrue يخزّن الهاتف بأرقام فقط بلا '+' (صيغة E.164 بلا علامة زائد).
+    // إرسال '+' يجعل البحث لا يطابق الصف المخزَّن ⇒ فشل دخول وهمي.
     const credentials = identifier.kind === 'phone'
-      ? { phone: identifier.value, password }
+      ? { phone: identifier.value.replace(/^\+/, ''), password }
       : { email: syntheticEmailForCode(identifier.value), password };
 
     const { data: authData, error: authError } = await db.auth.signInWithPassword(credentials);

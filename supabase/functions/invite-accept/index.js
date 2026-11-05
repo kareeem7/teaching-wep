@@ -108,8 +108,9 @@ export async function handler(request, deps = {}) {
       const { userId } = await requireSession(db, existingSession);
       identity = { userId, isNew: false };
     } else {
+      // GoTrue يقبل/يخزّن الهاتف بأرقام فقط بلا '+' (F-34).
       const createBody = identifier.kind === 'phone'
-        ? { phone: identifier.value, password, fullName, role: invite.kind === 'teacher_invite' ? 'teacher' : 'student' }
+        ? { phone: identifier.value.replace(/^\+/, ''), password, fullName, role: invite.kind === 'teacher_invite' ? 'teacher' : 'student' }
         : {
           phone: undefined,
           password,

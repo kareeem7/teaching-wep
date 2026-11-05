@@ -65,7 +65,7 @@ async function seedUser({ phone, password }) {
   const created = await call('/auth/v1/admin/users', {
     method: 'POST',
     headers: { ...json(), authorization: `Bearer ${SERVICE}` },
-    body: JSON.stringify({ phone, password, phone_confirm: true }),
+    body: JSON.stringify({ phone: phone.replace(/^\+/, ''), password, phone_confirm: true }),
   });
 
   let userId = created.body?.id ?? created.body?.user?.id;
@@ -75,8 +75,16 @@ async function seedUser({ phone, password }) {
       method: 'GET',
       headers: { ...json(), authorization: `Bearer ${SERVICE}` },
     });
-    const found = (list.body?.users ?? []).find((u) => u.phone === phone.replace('+', ''));
-    if (!found) return { ok: false, detail: 'تعذّر إنشاء المستخدم أو العثور عليه' };
+    const wanted = phone.replace(/^\+/, '');
+    const found = (list.body?.users ?? []).find((u) => String(u.phone ?? '').replace(/^\+/, '') === wanted);
+    if (!found) {
+      return {
+        ok: false,
+        detail: 'تعذّر إنشاء المستخدم أو العثور عليه',
+        createStatus: created.status,
+        createError: created.body ?? null,
+      };
+    }
     userId = found.id;
     await call(`/auth/v1/admin/users/${userId}`, {
       method: 'PUT',
@@ -158,12 +166,18 @@ async function main() {
     headers: adminHeaders,
     body: JSON.stringify({ action: 'invite', phone: TEACHER_PHONE, full_name: 'مدرس مدعو', headline: 'رياضيات' }),
   });
+  // الدالة تُعيد رابط الدعوة كاملًا (والرمز داخله) لا الرمز وحده.
+  const inviteLink = invite.body?.data?.invite_link ?? invite.body?.invite_link ?? null;
   const inviteToken =
-    invite.body?.data?.token ?? invite.body?.token ?? invite.body?.data?.invite_token ?? null;
+    invite.body?.data?.token ??
+    invite.body?.token ??
+    invite.body?.data?.invite_token ??
+    (typeof inviteLink === 'string' ? inviteLink.split('/').filter(Boolean).pop() : null);
   record('دعوة مدرس من اللوحة', invite.status === 200 && Boolean(inviteToken), {
     status: invite.status,
     code: invite.body?.error?.code ?? null,
     has_token: Boolean(inviteToken),
+    invitation_id: invite.body?.data?.invitation_id ?? null,
   });
 
   // ٤) محاولة كتابة أكاديمية بحساب السوبر أدمن — يجب أن تُرفض خادميًا
