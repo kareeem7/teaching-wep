@@ -109,27 +109,29 @@ jobs:
           REF: ${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}
           SHA: ${{ github.sha }}
         run: |
-          set -uo pipefail
-          exec > >(tee -a /tmp/journey.log) 2>&1
-          stamp="${SHA:0:12}"
-          echo "البصمة المتوقعة: ${stamp}"
-          bad=0
-          for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
-            # الجسم قد يكون مضغوطًا أو ثنائيًا: يُحفظ في ملف ويُفحص بـgrep -a
-            # (substitution في الصدفة يُسقط البايتات الصفرية فيُفسد المقارنة).
-            http=$(curl --compressed -sS --max-time 30 -o /tmp/fn.bin -w '%{http_code}' \
-              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
-              "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || echo 000)
-            if [ "$http" = "200" ] && grep -qa "FUNCTION_BUILD = '${stamp}'" /tmp/fn.bin; then
-              echo "PASS · المنشور ${name} = ${stamp}"
-            else
-              found=$(grep -ao "FUNCTION_BUILD = '[^']*'" /tmp/fn.bin | head -1)
-              echo "::error::الدالة ${name} ليست كود هذا الالتزام (HTTP ${http} · متوقع ${stamp} · وُجد: ${found:-لا بصمة})"
-              if [ "$http" != "200" ]; then head -c 200 /tmp/fn.bin | tr -d '\000' || true; echo; fi
-              bad=1
-            fi
-          done
-          exit $bad
+          set -o pipefail
+          # لا `exec >(tee)`: تُفقد المخرجات عند الخروج السريع، فتظهر الخطوة صامتة.
+          {
+            stamp="${SHA:0:12}"
+            echo "البصمة المتوقعة: ${stamp}"
+            bad=0
+            for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
+              # الجسم قد يكون مضغوطًا: يُحفظ في ملف ويُفحص بـgrep -a (الـsubstitution
+              # في الصدفة تُسقط البايتات الصفرية فتُفسد المقارنة).
+              http=$(curl --compressed -sS --max-time 30 -o /tmp/fn.bin -w '%{http_code}' \
+                -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+                "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || echo 000)
+              size=$(wc -c </tmp/fn.bin 2>/dev/null || echo 0)
+              if [ "$http" = "200" ] && grep -qa "FUNCTION_BUILD = '${stamp}'" /tmp/fn.bin; then
+                echo "PASS · المنشور ${name} = ${stamp}"
+              else
+                found=$(grep -ao "FUNCTION_BUILD = '[^']*'" /tmp/fn.bin 2>/dev/null | head -1)
+                echo "::error::الدالة ${name} ليست كود هذا الالتزام (HTTP ${http} · ${size} بايت · متوقع ${stamp} · وُجد: ${found:-لا بصمة})"
+                bad=1
+              fi
+            done
+            exit $bad
+          } 2>&1 | tee -a /tmp/journey.log
 
       - name: الرحلة الكاملة عبر HTTP
         env:
