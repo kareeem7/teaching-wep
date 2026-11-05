@@ -63,7 +63,29 @@ async function call(path, init) {
   } catch {
     body = { raw: text.slice(0, 300) };
   }
-  return { status: response.status, body };
+  return {
+    status: response.status,
+    body,
+    // F-43: بصمة كود الدالة المنشورة — تكشف النشر القديم بلا وصول إلى السجلات.
+    build: response.headers.get('x-function-build'),
+  };
+}
+
+/** الدوال الست المنشورة — تُفحص بصمتها كلها لأن النشر قد ينجح جزئيًا. */
+const FUNCTIONS = ['auth-login', 'admin-teachers', 'admin-instructions', 'invite-accept', 'auth-recovery', 'workspace-select'];
+
+/** يقرأ بصمة البناء من رد أي دالة (الرد نفسه قد يكون 400/401 ولا يهم). */
+async function probeBuilds() {
+  const found = {};
+  for (const name of FUNCTIONS) {
+    const response = await call(`/functions/v1/${name}`, {
+      method: 'POST',
+      headers: json(),
+      body: '{}',
+    });
+    found[name] = response.build ?? null;
+  }
+  return found;
 }
 
 // مكالمات الدوال: verify_jwt=false ⇒ لا حاجة لـapikey إطلاقًا (وأي apikey خاطئ قد يرفضها البوابة).
@@ -175,6 +197,23 @@ async function main() {
   });
   const anonProbe = await call('/rest/v1/groups?select=id&limit=1', { method: 'GET', headers: { ...json(), apikey: ANON } });
   note('حالة المفتاح العام مع PostgREST', { status: anonProbe.status, code: anonProbe.body?.code ?? null });
+
+  // ١.٥) بصمة كود الدوال المنشورة: النشر القديم يجعل كل نتيجة لاحقة بلا معنى (F-43)
+  const expectedBuild = String(env.EXPECTED_BUILD ?? '').trim().toLowerCase().slice(0, 12);
+  const builds = await probeBuilds();
+  const buildValues = Object.values(builds);
+  const uniqueBuilds = Array.from(new Set(buildValues.filter(Boolean)));
+  if (expectedBuild) {
+    const allMatch = buildValues.every((value) => typeof value === 'string' && value.toLowerCase().startsWith(expectedBuild));
+    record('بصمة كود الدوال المنشور', allMatch, { expected: expectedBuild, builds });
+  } else if (uniqueBuilds.length === 1) {
+    note('بصمة كود الدوال المنشور', { build: uniqueBuilds[0] });
+  } else if (uniqueBuilds.length === 0) {
+    // تشغيل محلي على خادم وهمي: لا بصمة أصلًا — ملاحظة لا فشل.
+    note('بصمة كود الدوال المنشور', { builds, reason: 'لا ترويسة بصمة (تشغيل محلي)' });
+  } else {
+    record('بصمة كود الدوال المنشور', false, { builds, distinct: uniqueBuilds, reason: 'بصمات مختلفة بين الدوال' });
+  }
 
   // ١) حسابات اصطناعية
   const admin = await seedUser({ phone: ADMIN_PHONE, password: ADMIN_PASSWORD });
@@ -351,12 +390,16 @@ async function main() {
       code: suspend.body?.code ?? suspend.body?.error?.code ?? null,
       changed: suspend.body?.data?.changed ?? null,
       identity_banned: suspend.body?.data?.identity_banned ?? null,
+      revoked_auth_sessions: suspend.body?.data?.revoked_auth_sessions ?? null,
       message: suspend.body?.message ?? null,
       details: suspend.body?.details ?? null,
     });
 
     const afterSuspend = await login(TEACHER_PHONE, TEACHER_PASSWORD);
-    const blocked = afterSuspend.status !== 200 || !afterSuspend.token;
+    // الفشل التقني (502/500) ليس دليل منع: يجب أن يكون الرد رفضًا صريحًا
+    // (403 ACCOUNT_DISABLED أو 401 من المزوّد) بلا توكن. العدّ لكل ما ليس 200
+    // كان يخفي عيبًا حقيقيًا في المنع (F-41).
+    const blocked = (afterSuspend.status === 401 || afterSuspend.status === 403) && !afterSuspend.token;
     record('منع دخول المدرس الموقوف', blocked, {
       status: afterSuspend.status,
       code: afterSuspend.body?.code ?? afterSuspend.body?.error?.code ?? null,

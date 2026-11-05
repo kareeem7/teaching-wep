@@ -103,6 +103,8 @@ jobs:
 
       - name: الرحلة الكاملة عبر HTTP
         env:
+          # F-43: الرحلة تقارن بصمة الدوال المنشورة بهذا الالتزام وترفض النشر القديم
+          EXPECTED_BUILD: ${{ github.sha }}
           TEST_SUPABASE_URL: https://${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}.supabase.co
           TEST_SERVICE_ROLE_KEY: ${{ secrets.TEST_SERVICE_ROLE_KEY }}
           TEST_ANON_KEY: ${{ secrets.TEST_ANON_KEY }}

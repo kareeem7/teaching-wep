@@ -765,3 +765,13 @@ test('admin-teachers: إعادة التنشيط ترفع الحظر ولا تُ�
   assert.deepEqual(bans, [{ id: TEACHER_ID, banned: false }]);
   assert.ok(!db.calls.some((call) => call.kind === 'auth' && call.name === 'signOutGlobal'));
 });
+
+// F-43: بصمة البناء في كل رد — بدونها لا يمكن كشف «نشر قديم»
+test('jsonResponse يحمل ترويسة x-function-build (F-43)', async () => {
+  const { jsonResponse, buildStamp, okResponse } = await import('../../supabase/functions/_shared/errors.js');
+  const direct = jsonResponse({ ok: true });
+  assert.equal(direct.headers.get('x-function-build'), 'dev', 'خارج الحزمة تكون البصمة dev');
+  assert.equal(buildStamp(), 'dev');
+  const ok = okResponse({ a: 1 });
+  assert.equal(ok.headers.get('x-function-build'), 'dev');
+});

@@ -8,7 +8,7 @@ let seq = 0;
 const uuid = () => `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`;
 
 const json = (res, status, body) => {
-  res.writeHead(status, { 'content-type': 'application/json' });
+  res.writeHead(status, { 'content-type': 'application/json', 'x-function-build': 'mock' });
   res.end(body === undefined ? '' : JSON.stringify(body));
 };
 
