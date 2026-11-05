@@ -102,7 +102,10 @@ jobs:
           TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
           TEST_TEACHER_PHONE: ${{ inputs.teacher_phone }}
           TEST_TEACHER_PASSWORD: ${{ secrets.TEST_TEACHER_PASSWORD }}
-        run: node scripts/admin-journey.mjs
+        run: |
+          set -o pipefail
+          exec > >(tee -a /tmp/journey.log) 2>&1
+          node scripts/admin-journey.mjs
 
       - name: نشر سبب الفشل كتعليق على الالتزام
         if: failure()
@@ -114,7 +117,7 @@ jobs:
           {
             echo "### فشل تشغيل رحلة الإدارة"
             echo '```'
-            tail -c 3500 /tmp/journey.log
+            tail -c 6000 /tmp/journey.log
             echo '```'
           } > /tmp/comment.md
           gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" \

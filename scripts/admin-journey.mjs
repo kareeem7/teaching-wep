@@ -61,7 +61,7 @@ const json = () => ({
 });
 
 /** ينشئ مستخدمًا اصطناعيًا عبر واجهة الإدارة (service_role، من CI فقط) ويضبط ملفه. */
-async function seedUser({ phone, password, role, fullName }) {
+async function seedUser({ phone, password }) {
   const created = await call('/auth/v1/admin/users', {
     method: 'POST',
     headers: { ...json(), authorization: `Bearer ${SERVICE}` },
@@ -85,28 +85,31 @@ async function seedUser({ phone, password, role, fullName }) {
     });
   }
 
-  const profile = await call('/rest/v1/profiles?on_conflict=user_id', {
+  // app.profiles غير مكشوفة عبر PostgREST (المخطط المكشوف هو public فقط).
+  // فنقرأ حالة الملف عبر RPC الخدمي بدل الكتابة في مسار غير موجود.
+  const context = await call('/rest/v1/rpc/svc_profile_context', {
     method: 'POST',
-    headers: {
-      ...json(),
-      authorization: `Bearer ${SERVICE}`,
-      prefer: 'resolution=merge-duplicates,return=representation',
-    },
-    body: JSON.stringify([
-      { user_id: userId, full_name: fullName, role, status: 'active', phone_e164: phone },
-    ]),
+    headers: { ...json(), authorization: `Bearer ${SERVICE}` },
+    body: JSON.stringify({ p_user_id: userId }),
   });
+  const row = Array.isArray(context.body) ? context.body[0] : context.body;
+  const hasProfile = Boolean(row?.user_id);
 
-  return { ok: Boolean(userId), userId, profileStatus: profile.status };
+  return { ok: Boolean(userId) && hasProfile, userId, profileStatus: context.status, hasProfile };
 }
 
 async function login(phone, password) {
   const response = await call('/functions/v1/auth-login', {
     method: 'POST',
-    headers: { ...json(), origin: BASE },
+    // بلا Origin: الخادم يسمح بالطلبات غير المتصفحية (isOriginAllowed(undefined) ⇒ true)
+    headers: { ...json() },
     body: JSON.stringify({ identifier: phone, password }),
   });
-  const token = response.body?.data?.session?.access_token ?? response.body?.session?.access_token;
+  const token =
+    response.body?.data?.access_token ??
+    response.body?.data?.session?.access_token ??
+    response.body?.session?.access_token ??
+    null;
   return { status: response.status, token, body: response.body };
 }
 
@@ -130,9 +133,16 @@ async function main() {
 
   // ١) حسابات اصطناعية
   const admin = await seedUser({ phone: ADMIN_PHONE, password: ADMIN_PASSWORD, role: 'super_admin', fullName: 'أدمن اختبار' });
-  record('تهيئة حساب السوبر أدمن', admin.ok, { user_id: admin.userId ?? null });
+  record('تهيئة حساب السوبر أدمن', admin.ok, {
+    user_id: admin.userId ?? null,
+    has_profile: admin.hasProfile ?? false,
+    message: admin.ok ? undefined : 'لا يوجد صف في app.profiles لهذا الهاتف — أنشئه أولًا',
+  });
   const teacher = await seedUser({ phone: TEACHER_PHONE, password: TEACHER_PASSWORD, role: 'teacher', fullName: 'مدرس اختبار' });
-  record('تهيئة حساب المدرس', teacher.ok, { user_id: teacher.userId ?? null });
+  record('تهيئة حساب المدرس', teacher.ok, {
+    user_id: teacher.userId ?? null,
+    has_profile: teacher.hasProfile ?? false,
+  });
   if (failed) return;
 
   // ٢) دخول السوبر أدمن عبر الدالة الحقيقية
@@ -140,7 +150,7 @@ async function main() {
   record('دخول السوبر أدمن', Boolean(adminLogin.token), { status: adminLogin.status });
   if (!adminLogin.token) return;
 
-  const adminHeaders = { ...json(), origin: BASE, authorization: `Bearer ${adminLogin.token}` };
+  const adminHeaders = { ...json(), authorization: `Bearer ${adminLogin.token}` };
 
   // ٣) دعوة مدرس عبر الدالة — يجب أن تُعيد رمزًا مرة واحدة
   const invite = await call('/functions/v1/admin-teachers', {
