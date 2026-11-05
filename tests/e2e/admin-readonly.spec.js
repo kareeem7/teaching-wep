@@ -11,7 +11,7 @@ import { readFileSync } from 'node:fs';
  *   ٣. عدد المستلمين المعروض يأتي من الخادم، لا من حساب المتصفح.
  */
 
-const VALID_URL = 'https://e2eadmin11111111111.supabase.co';
+const VALID_URL = 'https://e2eadmin000000000000.supabase.co'; // ٢٠ محرفًا: شرط isValidSupabaseUrl
 const VALID_KEY = 'sb_publishable_e2e_admin_key';
 
 async function stubSupabase(page, { role = 'super_admin', views = {} } = {}) {

@@ -11,7 +11,7 @@ import { test, expect } from '@playwright/test';
  *   ٤. لا يوجد في أي شاشة إدارية حقل لتعديل بيانات أكاديمية.
  */
 
-const VALID_URL = 'https://e2eadmin00000000000.supabase.co';
+const VALID_URL = 'https://e2eadmin000000000000.supabase.co'; // ٢٠ محرفًا: شرط isValidSupabaseUrl
 const VALID_KEY = 'sb_publishable_e2e_admin_key';
 
 const TEACHERS = [
