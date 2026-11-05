@@ -18,15 +18,12 @@ set search_path = app, pg_temp
 as $$
 declare
   v_deleted integer;
+  v_prefix text;
 begin
-  if p_prefix is null or btrim(p_prefix) = '' then
-    delete from app.rate_limits;
-    get diagnostics v_deleted = row_count;
-    return v_deleted;
-  end if;
-
-  -- تطابق بادئة فقط: لا تُمرَّر مفاتيح كاملة في السجلات.
-  delete from app.rate_limits where bucket_key like (btrim(p_prefix) || '%');
+  -- بادئة فارغة = كل المفاتيح. الشرط في `where` مقصود: قاعدة الاختبار تُفعّل
+  -- safeupdate، و`delete` بلا `where` يرفض بـ21000 (شوهد في الرحلة F-47).
+  v_prefix := coalesce(btrim(p_prefix), '');
+  delete from app.rate_limits where bucket_key like (v_prefix || '%');
   get diagnostics v_deleted = row_count;
   return v_deleted;
 end;
