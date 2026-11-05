@@ -463,7 +463,7 @@ function adminDb(spec = {}) {
   const role = spec.role ?? 'super_admin';
   const status = spec.status ?? 'active';
   return fakeDb({
-    auth: { getUser: () => ({ data: { user: { id: ADMIN_ID } }, error: null }) },
+    auth: { getUser: () => ({ data: { id: ADMIN_ID }, error: null }) },
     rpc: {
       svc_profile_context: () => ({ data: { user_id: ADMIN_ID, role, status }, error: null }),
       svc_rate_limit_hit: () => ({ data: 1, error: null }),
@@ -558,7 +558,7 @@ test('admin-teachers: قرار SQL مرفوض يُترجم إلى رمز API ص�
 test('admin-teachers: الإيقاف يحاول إبطال جلسات Auth ولا يُفشل الطلب عند فشله', async () => {
   const db = fakeDb({
     auth: {
-      getUser: () => ({ data: { user: { id: ADMIN_ID } }, error: null }),
+      getUser: () => ({ data: { id: ADMIN_ID }, error: null }),
       signOutGlobal: () => ({ data: null, error: { status: 500, body: {} } }),
     },
     rpc: {

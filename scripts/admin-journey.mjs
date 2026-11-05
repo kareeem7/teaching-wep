@@ -198,7 +198,7 @@ async function main() {
   const adminLogin = await login(ADMIN_PHONE, ADMIN_PASSWORD);
   const canAdmin = record('دخول السوبر أدمن', Boolean(adminLogin.token), {
     status: adminLogin.status,
-    code: adminLogin.body?.error?.code ?? null,
+    code: adminLogin.body?.code ?? adminLogin.body?.error?.code ?? null,
   });
   const adminHeaders = { ...json(), authorization: `Bearer ${adminLogin.token}` };
 
@@ -230,7 +230,7 @@ async function main() {
     }
     record('دعوة مدرس من اللوحة', invite.status === 200 && Boolean(inviteToken), {
       status: invite.status,
-      code: invite.body?.error?.code ?? null,
+      code: invite.body?.code ?? invite.body?.error?.code ?? null,
       invitation_id: invite.body?.data?.invitation_id ?? null,
       view_link: invite.body?.error?.code === 'FORBIDDEN' ? 'لا صلاحية' : undefined,
     });
@@ -252,7 +252,7 @@ async function main() {
     });
     record('قبول الدعوة وإنشاء الحساب', accept.status === 200, {
       status: accept.status,
-      code: accept.body?.error?.code ?? null,
+      code: accept.body?.code ?? accept.body?.error?.code ?? null,
       role: accept.body?.data?.profile?.role ?? null,
     });
 
@@ -298,7 +298,7 @@ async function main() {
     });
     record('إيقاف المدرس بسبب', suspend.status === 200, {
       status: suspend.status,
-      code: suspend.body?.error?.code ?? null,
+      code: suspend.body?.code ?? suspend.body?.error?.code ?? null,
       changed: suspend.body?.data?.changed ?? null,
     });
 
@@ -326,7 +326,7 @@ async function main() {
     });
     record('إرسال تعليم لمدرس محدد', instruction.status === 200, {
       status: instruction.status,
-      code: instruction.body?.error?.code ?? null,
+      code: instruction.body?.code ?? instruction.body?.error?.code ?? null,
       recipients: instruction.body?.data?.recipients ?? null,
     });
   }
