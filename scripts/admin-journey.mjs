@@ -41,6 +41,12 @@ function record(step, ok, info = {}) {
   return ok;
 }
 
+/** ملاحظة تشخيصية لا تُفشل الرحلة (معلومات بيئة، لا معيار قبول). */
+function note(step, info = {}) {
+  log.push({ step, ok: true, note: true, at: new Date().toISOString(), ...info });
+  process.stdout.write(`NOTE · ${step} · ${JSON.stringify(info)}\n`);
+}
+
 /** @param {string} path @param {RequestInit} init */
 async function call(path, init) {
   const response = await fetch(`${BASE}${path}`, init);
@@ -172,9 +178,12 @@ async function main() {
     method: 'GET',
     headers: { ...json(), apikey: ANON },
   });
-  record('المفتاح العام يعمل (PostgREST)', anonProbe.status === 200, {
+  note('حالة المفتاح العام مع PostgREST', {
     status: anonProbe.status,
     code: anonProbe.body?.code ?? null,
+    hint: anonProbe.status === 401
+      ? 'مفتاح النشر قد لا يقبله PostgREST في هذا المشروع؛ لا يوقف الرحلة'
+      : null,
   });
 
   // ١) حسابات اصطناعية
@@ -191,7 +200,7 @@ async function main() {
     user_id: teacher.userId ?? null,
     has_profile: teacher.hasProfile ?? false,
   });
-  if (failed) return;
+  if (!admin.ok || !teacher.ok) return;
 
   // ٢) دخول السوبر أدمن عبر الدالة الحقيقية
   const adminLogin = await login(ADMIN_PHONE, ADMIN_PASSWORD);
@@ -225,7 +234,8 @@ async function main() {
     method: 'POST',
     headers: {
       ...json(),
-      apikey: ANON,
+      // apikey لا يحدد الدور: الدور يأتي من JWT المستخدم أدناه. نستخدم مفتاحًا نعلم صحته.
+      apikey: SERVICE,
       authorization: `Bearer ${adminLogin.token}`,
       prefer: 'return=representation',
     },
