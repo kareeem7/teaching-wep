@@ -153,6 +153,17 @@ export function createDb(options) {
           body: { password },
         });
       },
+      /**
+       * حظر/رفع حظر على مستوى GoTrue نفسه (ban_duration).
+       * لماذا؟ لأن رفض الدخول بعد إصدار التوكن لا يمنع إصداره: الحظر في المزوّد
+       * يوقف الدخول من المصدر ويجعل «منع الموقوف» حقيقة لا استنتاجًا (F-42).
+       */
+      setBan(userId, banned) {
+        return request(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+          method: 'PUT',
+          body: { ban_duration: banned ? '876000h' : 'none' },
+        });
+      },
       signOutGlobal(userId) {
         return request(`/auth/v1/admin/users/${encodeURIComponent(userId)}/logout`, {
           method: 'POST',

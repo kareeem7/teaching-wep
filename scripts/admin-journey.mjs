@@ -282,43 +282,42 @@ async function main() {
     });
   }
 
-  // ٦) الإيقاف: دخول المدرس ثم إيقافه ثم منع الدخول
-  const teacherLogin = await login(TEACHER_PHONE, TEACHER_PASSWORD);
-  record('دخول المدرس', Boolean(teacherLogin.token), { status: teacherLogin.status, code: teacherLogin.body?.error?.code ?? null });
-
-  if (!canAdmin) {
-    skip('إيقاف المدرس', 'لا توكن سوبر أدمن');
-    skip('منع دخول المدرس الموقوف', 'لم يُوقَف');
-  } else {
-    const suspend = await call('/functions/v1/admin-teachers', {
+  // ٦) تهيئة حالة المدرس: الرحلة حالة تراكمية — تشغيل سابق قد ترك المدرس موقوفًا،
+  // فيفشل الإرسال التعليمي (لا مستقبلين نشطين) ويصير «منع الدخول» بلا معنى (F-41).
+  const setStatus = (status, reason) =>
+    call('/functions/v1/admin-teachers', {
       method: 'POST',
       headers: adminHeaders,
-      body: JSON.stringify({
-        action: 'set-status',
-        user_id: teacher.userId,
-        status: 'suspended',
-        reason: 'إيقاف اختباري من رحلة الفحص',
-      }),
-    });
-    record('إيقاف المدرس بسبب', suspend.status === 200, {
-      status: suspend.status,
-      code: suspend.body?.code ?? suspend.body?.error?.code ?? null,
-      changed: suspend.body?.data?.changed ?? null,
-      message: suspend.body?.message ?? null,
-      details: suspend.body?.details ?? null,
+      body: JSON.stringify({ action: 'set-status', user_id: teacher.userId, status, reason }),
     });
 
-    const afterSuspend = await login(TEACHER_PHONE, TEACHER_PASSWORD);
-    record('منع دخول المدرس الموقوف', afterSuspend.status !== 200 || !afterSuspend.token, {
-      status: afterSuspend.status,
-      code: afterSuspend.body?.error?.code ?? null,
-      message: afterSuspend.body?.message ?? null,
+  let teacherActive = false;
+  if (!canAdmin) {
+    skip('تهيئة المدرس نشطًا', 'لا توكن سوبر أدمن');
+  } else {
+    const activate = await setStatus('active', 'تهيئة رحلة الفحص — إعادة تنشيط المدرس');
+    teacherActive = activate.status === 200;
+    record('تهيئة المدرس نشطًا', teacherActive, {
+      status: activate.status,
+      code: activate.body?.code ?? activate.body?.error?.code ?? null,
+      changed: activate.body?.data?.changed ?? null,
+      message: activate.body?.message ?? null,
+      details: activate.body?.details ?? null,
     });
   }
 
-  // ٧) تعليمات إدارية للمدرس المحدد
-  if (!canAdmin) {
-    skip('إرسال تعليم لمدرس محدد', 'لا توكن سوبر أدمن');
+  // ٧) دخول المدرس النشط
+  const teacherLogin = await login(TEACHER_PHONE, TEACHER_PASSWORD);
+  record('دخول المدرس', Boolean(teacherLogin.token), {
+    status: teacherLogin.status,
+    code: teacherLogin.body?.code ?? teacherLogin.body?.error?.code ?? null,
+    message: teacherLogin.body?.message ?? null,
+    details: teacherLogin.body?.details ?? null,
+  });
+
+  // ٨) تعليمات إدارية للمدرس المحدد — قبل الإيقاف، لأن المستقبلين مدرسون نشطون فقط
+  if (!canAdmin || !teacherActive) {
+    skip('إرسال تعليم لمدرس محدد', canAdmin ? 'المدرس غير نشط' : 'لا توكن سوبر أدمن');
   } else {
     const instruction = await call('/functions/v1/admin-instructions', {
       method: 'POST',
@@ -339,8 +338,50 @@ async function main() {
       details: instruction.body?.details ?? null,
     });
   }
-}
 
+  // ٩) الإيقاف ثم منع الدخول ثم إعادة الحالة — آخر خطوة، وتبقى البيئة نظيفة بعدها
+  if (!canAdmin || !teacherActive) {
+    skip('إيقاف المدرس بسبب', 'المدرس غير نشط');
+    skip('منع دخول المدرس الموقوف', 'لم يُوقَف');
+    skip('استعادة المدرس بعد الفحص', 'لم يُوقَف');
+  } else {
+    const suspend = await setStatus('suspended', 'إيقاف اختباري من رحلة الفحص');
+    record('إيقاف المدرس بسبب', suspend.status === 200, {
+      status: suspend.status,
+      code: suspend.body?.code ?? suspend.body?.error?.code ?? null,
+      changed: suspend.body?.data?.changed ?? null,
+      identity_banned: suspend.body?.data?.identity_banned ?? null,
+      message: suspend.body?.message ?? null,
+      details: suspend.body?.details ?? null,
+    });
+
+    const afterSuspend = await login(TEACHER_PHONE, TEACHER_PASSWORD);
+    const blocked = afterSuspend.status !== 200 || !afterSuspend.token;
+    record('منع دخول المدرس الموقوف', blocked, {
+      status: afterSuspend.status,
+      code: afterSuspend.body?.code ?? afterSuspend.body?.error?.code ?? null,
+      message: afterSuspend.body?.message ?? null,
+      details: afterSuspend.body?.details ?? null,
+    });
+
+    const restore = await setStatus('active', 'انتهاء رحلة الفحص — إعادة المدرس نشطًا');
+    const restored = restore.status === 200;
+    record('استعادة المدرس بعد الفحص', restored, {
+      status: restore.status,
+      changed: restore.body?.data?.changed ?? null,
+      message: restore.body?.message ?? null,
+    });
+    if (restored) {
+      const afterRestore = await login(TEACHER_PHONE, TEACHER_PASSWORD);
+      record('دخول المدرس بعد الاستعادة', Boolean(afterRestore.token), {
+        status: afterRestore.status,
+        code: afterRestore.body?.code ?? afterRestore.body?.error?.code ?? null,
+        message: afterRestore.body?.message ?? null,
+        details: afterRestore.body?.details ?? null,
+      });
+    }
+  }
+}
 main()
   .catch((error) => record('استثناء غير متوقع', false, { message: String(error?.message ?? error) }))
   .finally(() => {

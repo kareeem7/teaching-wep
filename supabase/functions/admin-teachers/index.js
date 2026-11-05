@@ -170,15 +170,28 @@ export async function handler(request, deps = {}) {
     });
     if (error) throw apiErrorFromDb(error);
 
-    // الإيقاف: إبطال كل جلسات Supabase Auth. لا يُفشل الطلب إن تعذّر — RLS يرفض الجلسات القديمة
-    // بسبب sessions_valid_after، فهذا إجراء تعميق لا شرط صحة.
+    // الإيقاف: يُنفَّذ على ثلاث طبقات، ولا يُفشل الطلب إن تعذّر أيٌّ منها (RLS يبقى الحكم):
+    //   ١. حظر في GoTrue نفسه (ban_duration) ⇒ لا يُصدر المزوّد توكنًا للموقوف أصلًا.
+    //   ٢. إبطال الجلسات القائمة (signOutGlobal) ⇒ لا يبقى توكن صالح في مكان ما.
+    //   ٣. sessions_valid_after في القاعدة ⇒ أي توكن قديم يُرفض في RLS.
+    // الفصل مقصود (F-39/F-42): تعذّر طبقة تعميق لا يجوز أن يُحوّل قرارًا صحيحًا إلى فشل.
     let revokedAuthSessions = false;
-    if (status === 'suspended' && data?.changed === true) {
+    let identityBanned = null;
+    if (data?.changed === true) {
+      const wantBan = status === 'suspended';
       try {
-        const result = await db.auth.signOutGlobal(body.user_id);
-        revokedAuthSessions = !result.error;
+        const result = await db.auth.setBan(body.user_id, wantBan);
+        identityBanned = !result?.error;
       } catch {
-        revokedAuthSessions = false;
+        identityBanned = false;
+      }
+      if (wantBan) {
+        try {
+          const result = await db.auth.signOutGlobal(body.user_id);
+          revokedAuthSessions = !result?.error;
+        } catch {
+          revokedAuthSessions = false;
+        }
       }
     }
 
@@ -189,6 +202,7 @@ export async function handler(request, deps = {}) {
         status: data?.status ?? null,
         changed: data?.changed ?? false,
         revoked_auth_sessions: revokedAuthSessions,
+        identity_banned: identityBanned,
       },
       { corsHeaders: corsHeaders(request.headers.get('origin'), allowlist) },
     );

@@ -44,10 +44,11 @@ function fakeDb(spec = {}) {
     auth: new Proxy(
       {},
       {
-        get: (_target, method) => (arg) => {
-          calls.push({ kind: 'auth', name: String(method), arg });
+        // يمرّر كل الوسائط: بعض دوال Auth تأخذ أكثر من مُدخل (مثل setBan(id, banned)).
+        get: (_target, method) => (...args) => {
+          calls.push({ kind: 'auth', name: String(method), arg: args[0], args });
           const fn = spec.auth?.[method];
-          return Promise.resolve(fn ? fn(arg) : { data: null, error: null });
+          return Promise.resolve(fn ? fn(...args) : { data: null, error: null });
         },
       },
     ),
@@ -702,4 +703,65 @@ test('auth-login: فشل signOutGlobal مع حساب بلا ملف يبقى 403 
 
   assert.equal(response.status, 403);
   assert.equal((await response.json()).code, 'ACCOUNT_DISABLED');
+});
+
+test('admin-teachers: الإيقاف يحظر الحساب في GoTrue نفسه (F-42)', async () => {
+  const bans = [];
+  const db = fakeDb({
+    auth: {
+      getUser: () => ({ data: { id: ADMIN_ID }, error: null }),
+      setBan: (id, banned) => {
+        bans.push({ id, banned });
+        return { data: {}, error: null };
+      },
+      signOutGlobal: () => ({ data: {}, error: null }),
+    },
+    rpc: {
+      svc_profile_context: () => ({ data: { user_id: ADMIN_ID, role: 'super_admin', status: 'active' }, error: null }),
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_admin_set_account_status: () => ({ data: { changed: true, user_id: TEACHER_ID, status: 'suspended' }, error: null }),
+    },
+  });
+
+  const response = await adminTeachers(
+    bearerRequest('/admin-teachers', { action: 'set-status', user_id: TEACHER_ID, status: 'suspended', reason: 'مخالفة سياسة' }, adminToken()),
+    { env: ADMIN_ENV, db },
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.data.identity_banned, true);
+  assert.deepEqual(bans, [{ id: TEACHER_ID, banned: true }], 'يجب حظر الحساب عند المزوّد لا الاكتفاء بإبطال الجلسات');
+});
+
+test('admin-teachers: إعادة التنشيط ترفع الحظر ولا تُبطل جلسات جديدة (F-42)', async () => {
+  const bans = [];
+  const db = fakeDb({
+    auth: {
+      getUser: () => ({ data: { id: ADMIN_ID }, error: null }),
+      setBan: (id, banned) => {
+        bans.push({ id, banned });
+        return { data: {}, error: null };
+      },
+      signOutGlobal: () => {
+        throw new Error('يجب ألا يُطلب إبطال الجلسات عند التنشيط');
+      },
+    },
+    rpc: {
+      svc_profile_context: () => ({ data: { user_id: ADMIN_ID, role: 'super_admin', status: 'active' }, error: null }),
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_admin_set_account_status: () => ({ data: { changed: true, user_id: TEACHER_ID, status: 'active' }, error: null }),
+    },
+  });
+
+  const response = await adminTeachers(
+    bearerRequest('/admin-teachers', { action: 'set-status', user_id: TEACHER_ID, status: 'active', reason: 'انتهاء التحقيق' }, adminToken()),
+    { env: ADMIN_ENV, db },
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.data.identity_banned, true);
+  assert.deepEqual(bans, [{ id: TEACHER_ID, banned: false }]);
+  assert.ok(!db.calls.some((call) => call.kind === 'auth' && call.name === 'signOutGlobal'));
 });
