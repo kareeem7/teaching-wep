@@ -167,9 +167,10 @@ async function main() {
     anon_kind: `${ANON.slice(0, 4)}…/${ANON.length}`,
   });
 
+  // المفاتيح الجديدة (sb_publishable_) ليست JWT، فلا تُرسل في Authorization — تُرسل في apikey فقط.
   const anonProbe = await call('/rest/v1/groups?select=id&limit=1', {
     method: 'GET',
-    headers: { ...json(), apikey: ANON, authorization: `Bearer ${ANON}` },
+    headers: { ...json(), apikey: ANON },
   });
   record('المفتاح العام يعمل (PostgREST)', anonProbe.status === 200, {
     status: anonProbe.status,
