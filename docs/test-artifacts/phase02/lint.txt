@@ -1,0 +1,4 @@
+eslint exit=0
+stylelint exit=0
+
+Scanned 11 files, no errors found (31 ms).

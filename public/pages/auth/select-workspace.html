@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="اختيار المساحة — المرحلة ٠٢: الهوية والصلاحيات.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.2.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — اختيار المساحة</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="select-workspace">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <main id="main" class="app-content">
+    <section class="card-mh card-mh--narrow">
+      <h1>اختيار المساحة</h1>
+
+      <div class="alert alert-warning" role="status">
+        <strong>العزل هنا حقيقي لا شكلي.</strong>
+        القائمة تأتي من الخادم حسب حسابك فقط. اختيار مساحة لا يزيد صلاحياتك،
+        وكل قراءة أو كتابة تُفحص مرة أخرى على الخادم.
+      </div>
+
+      <p class="text-muted-mh" data-workspace-status role="status">جارٍ تحميل مساحاتك…</p>
+      <p class="text-danger-mh" data-form-error role="alert" hidden></p>
+
+      <ul class="list-group list-group-flush" data-workspace-list></ul>
+
+      <div class="d-flex gap-2 mt-4">
+        <button class="btn-mh btn-mh--ghost" type="button" data-action="reload-workspaces">تحديث القائمة</button>
+        <a class="btn-mh btn-mh--ghost" href="login.html">تسجيل الخروج والعودة</a>
+      </div>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    مِنهاج · الإصدار 0.2.0 · <span class="tnum" data-current-year></span>
+  </footer>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

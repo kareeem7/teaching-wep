@@ -180,10 +180,52 @@ export async function bootstrap() {
   }
 }
 
+/**
+ * تهيئة صفحة المصادقة/المساحة حسب `data-page` على `<body>`.
+ * الاستيراد ديناميكي حتى لا تُحمَّل وحدات المصادقة في الصفحات العامة.
+ */
+export async function initPage(doc = document) {
+  const page = doc.body?.dataset?.page;
+  if (!page) return null;
+
+  if (page === 'login') {
+    const { initLoginPage } = await import('./auth.js');
+    initLoginPage();
+    return 'login';
+  }
+  if (page === 'accept-invitation') {
+    const { initAcceptInvitationPage } = await import('./auth.js');
+    initAcceptInvitationPage();
+    return 'accept-invitation';
+  }
+  if (page === 'request-recovery') {
+    const { initRequestRecoveryPage } = await import('./auth.js');
+    await initRequestRecoveryPage();
+    return 'request-recovery';
+  }
+  if (page === 'reset-password') {
+    const { initResetPasswordPage } = await import('./auth.js');
+    initResetPasswordPage();
+    return 'reset-password';
+  }
+  if (page === 'select-workspace') {
+    const [{ initSelectWorkspacePage }, { currentSession }] = await Promise.all([
+      import('./workspace.js'),
+      import('./auth.js'),
+    ]);
+    await initSelectWorkspacePage({ getSession: currentSession });
+    return 'select-workspace';
+  }
+
+  return null;
+}
+
 if (typeof document !== 'undefined') {
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => { void bootstrap(); });
+    document.addEventListener('DOMContentLoaded', () => {
+      void bootstrap().then(() => initPage());
+    });
   } else {
-    void bootstrap();
+    void bootstrap().then(() => initPage());
   }
 }

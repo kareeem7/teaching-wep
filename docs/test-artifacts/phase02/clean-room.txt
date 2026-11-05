@@ -1,0 +1,41 @@
+== نسخة نظيفة من HEAD للمرحلة ٠٢ ==
+475a88ea1a152bd5bbc7b51ff50ac2c1a63b4c1b
+ملفات متتبعة: 108
+
+## npm ci
+exit=0 (١٧٤ حزمة)
+
+## eslint / stylelint / htmlhint
+eslint exit=0
+stylelint exit=0
+
+Scanned 11 files, no errors found (26 ms).
+
+## unit
+# tests 52
+# pass 52
+# fail 0
+
+## e2e list
+Total: 84 tests in 3 files
+
+## HTTP من النسخة النظيفة
+/pages/auth/login.html                        200
+/pages/auth/accept-invitation.html            200
+/pages/auth/request-recovery.html             200
+/pages/auth/reset-password.html               200
+/pages/auth/select-workspace.html             200
+/pages/shared/app-shell.html                  200
+/assets/js/auth.js                            200
+/assets/js/api.js                             200
+/assets/js/workspace.js                       200
+/assets/css/app.css                           200
+
+## POST على مسار الدوال (متوقع الفشل: لا خدمة)
+status=501
+
+## أسرار في public/
+لا شيء
+
+## ملفات ممنوعة متتبعة
+لا شيء

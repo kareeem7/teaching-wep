@@ -1,0 +1,35 @@
+== فحص محلي بعد الإصلاح — 2026-11-05T06:38:00Z — HEAD 0a33c89 ==
+
+## ملفات متتبعة
+112
+
+## eslint
+exit=0
+
+## stylelint
+exit=0
+
+## htmlhint
+Scanned 11 files, no errors found (32 ms).
+
+## node --test (كل المراحل)
+# tests 70
+# pass 70
+# fail 0
+# skipped 0
+
+## playwright --list
+Total: 84 tests in 3 files
+
+## pglast (نحوي فقط)
+supabase/migrations/0001_extensions.sql 13
+supabase/migrations/0002_identity_profiles.sql 24
+supabase/migrations/0003_teacher_workspaces.sql 33
+supabase/migrations/0004_invitations_recovery.sql 28
+supabase/migrations/0005_rls_identity.sql 143
+tests/sql/identity_rls.test.sql 98
+المجموع 339
+
+## تأكيدات pgTAP
+51
+21:select plan(51);

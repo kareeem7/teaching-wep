@@ -1,0 +1,48 @@
+== فحص مستقل: نسخة نظيفة من HEAD ==
+f5d9e23640d354a1345795d0df4f53717d112710
+ملفات متتبعة: 109
+
+## npm ci
+added 174 packages in 2s
+
+## eslint
+eslint exit=0
+
+## stylelint
+stylelint exit=0
+
+## htmlhint
+
+Scanned 11 files, no errors found (27 ms).
+
+## unit (كل المراحل)
+# tests 52
+# pass 52
+# fail 0
+# skipped 0
+
+## e2e list
+Total: 84 tests in 3 files
+
+## playwright تشغيل فعلي
+    [mobile-chromium] › tests/e2e/workspace-isolation.spec.js:119:1 › حقول غير مسموح بها في الرد لا تُرسم في الصفحة 
+    [mobile-chromium] › tests/e2e/workspace-isolation.spec.js:139:1 › مساحة واحدة تُختار تلقائيًا وتُخزَّن 
+    [mobile-chromium] › tests/e2e/workspace-isolation.spec.js:154:1 › فشل الخادم لا ينتج قائمة وهمية 
+  4 passed (37.8s)
+playwright exit=0
+
+## أسرار في public/
+public/assets/js/config.js:6: *  ٢. لا يُقبل أي مفتاح سرّي (service_role أو sb_secret_) ولا يوجد مسار يقرأه.
+public/assets/js/config.js:56:  return claims.role === 'service_role';
+public/assets/js/config.js:108:    errors.push('مفتاح سرّي مرفوض: service_role أو sb_secret_ لا يُوضع في المتصفح أبدًا.');
+
+## ملفات ممنوعة متتبعة
+لا شيء
+
+## أدوات قاعدة البيانات المتاحة
+psql       غير موجود
+postgres   غير موجود
+docker     غير موجود
+supabase   غير موجود
+pg_ctl     غير موجود
+initdb     غير موجود

@@ -28,6 +28,22 @@ export default [
     },
   },
   {
+    // Edge Functions: بيئة Deno/Web (Response, crypto, fetch) — لا DOM ولا Node خاص
+    files: ['supabase/functions/**/*.js'],
+    languageOptions: {
+      ecmaVersion: 2023,
+      sourceType: 'module',
+      globals: { ...globals.browser, ...globals.node, Deno: 'readonly' },
+    },
+    rules: {
+      'no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
+      eqeqeq: ['error', 'always'],
+      'prefer-const': 'error',
+      'no-var': 'error',
+      'no-console': 'off',
+    },
+  },
+  {
     // اختبارات المتصفح: تعمل في Node لكن تُنفِّذ كودًا داخل الصفحة
     files: ['tests/e2e/**/*.js'],
     languageOptions: {

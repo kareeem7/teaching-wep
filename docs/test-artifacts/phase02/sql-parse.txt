@@ -1,0 +1,9 @@
+== تحقق نحوي بمحلل PostgreSQL الحقيقي (libpg_query / pglast) ==
+ملاحظة: هذا تحقق **نحوي** فقط. التنفيذ الدلالي وRLS يحتاج PostgreSQL فعلية (BLOCKED).
+
+supabase/migrations/0001_extensions.sql: OK — 13 عبارة
+supabase/migrations/0002_identity_profiles.sql: OK — 22 عبارة
+supabase/migrations/0003_teacher_workspaces.sql: OK — 29 عبارة
+supabase/migrations/0004_invitations_recovery.sql: OK — 26 عبارة
+supabase/migrations/0005_rls_identity.sql: OK — 129 عبارة
+tests/sql/identity_rls.test.sql: OK — 72 عبارة

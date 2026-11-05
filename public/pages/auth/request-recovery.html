@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="طلب استعادة كلمة مرور — المرحلة ٠٢: الهوية والصلاحيات.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.2.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — طلب استعادة</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="request-recovery">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <main id="main" class="app-content">
+    <section class="card-mh card-mh--narrow-sm">
+      <h1>طلب استعادة كلمة مرور</h1>
+
+      <div class="alert alert-warning" role="status">
+        <strong>هذه الصفحة للمدرس.</strong>
+        الطالب لا يستعيد كلمته بنفسه في هذه المرحلة: المدرس يتحقق من هويته خارج النظام،
+        ثم يصدر رمزًا قصير الأجل (٣٠ دقيقة) يُسلَّم للطالب مرة واحدة.
+        الجهاز لا يمنح دخولًا بحساب الطالب، ولا يرى كلمة المرور القديمة أو الجديدة.
+      </div>
+
+      <form data-form="request-recovery" novalidate>
+        <div class="field">
+          <label class="field__label" for="identifier">كود الطالب أو هاتفه</label>
+          <input class="field__control" id="identifier" name="identifier" type="text" required>
+          <p class="field__hint">يُبحث فقط داخل طلابك المرتبطين — لا يمكن استهداف طالب مدرس آخر.</p>
+        </div>
+
+        <div class="field">
+          <label class="field__label" for="reason">سبب الاستعادة</label>
+          <input class="field__control" id="reason" name="reason" type="text" required minlength="5">
+          <p class="field__hint">إلزامي، ويُسجَّل في سجل التدقيق بلا بيانات حساسة.</p>
+        </div>
+
+        <p class="text-danger-mh" data-form-error role="alert" hidden></p>
+        <p class="text-muted-mh" data-recovery-result role="status" hidden></p>
+
+        <button class="btn-mh btn-mh--block" type="submit" data-action="request-recovery">إصدار رمز استعادة</button>
+      </form>
+
+      <p class="mt-4 mb-0"><a href="login.html">العودة للدخول</a></p>
+    </section>
+  </main>
+
+  <footer class="app-footer">
+    مِنهاج · الإصدار 0.2.0 · <span class="tnum" data-current-year></span>
+  </footer>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>
