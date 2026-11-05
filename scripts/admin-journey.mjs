@@ -41,6 +41,12 @@ function record(step, ok, info = {}) {
   return ok;
 }
 
+/** خطوة لم تُنفَّذ لعدم تحقق شرطها — تُحسب «متخطاة» لا ناجحة ولا فاشلة. */
+function skip(step, reason) {
+  log.push({ step, skipped: true, at: new Date().toISOString(), reason });
+  process.stdout.write(`SKIP · ${step} · ${reason}\n`);
+}
+
 /** ملاحظة تشخيصية لا تُفشل الرحلة (معلومات بيئة، لا معيار قبول). */
 function note(step, info = {}) {
   log.push({ step, ok: true, note: true, at: new Date().toISOString(), ...info });
@@ -159,131 +165,183 @@ async function main() {
     return;
   }
 
-  // ٠) فحص أولي: هل مفتاح الخدمة والمفتاح العام يعملان أصلًا؟
-  const adminProbe = await call('/auth/v1/admin/users?per_page=1', {
-    method: 'GET',
-    headers: serviceJson(),
-  });
-  record('مفتاح الخدمة يعمل (GoTrue admin)', adminProbe.status === 200, {
+  // ٠) فحص أولي (ملاحظات بيئة، لا معايير قبول)
+  const adminProbe = await call('/auth/v1/admin/users?per_page=1', { method: 'GET', headers: serviceJson() });
+  note('حالة مفتاح الخدمة مع GoTrue', {
     status: adminProbe.status,
     code: adminProbe.body?.code ?? adminProbe.body?.error_code ?? null,
-    message: typeof adminProbe.body?.msg === 'string' ? adminProbe.body.msg.slice(0, 120) : null,
-    // بصمة غير حساسة: نوع المفتاح (JWT يبدأ eyJh · مفتاح جديد يبدأ sb_s) وطوله فقط
     service_kind: `${SERVICE.slice(0, 4)}…/${SERVICE.length}`,
     anon_kind: `${ANON.slice(0, 4)}…/${ANON.length}`,
   });
-
-  // المفاتيح الجديدة (sb_publishable_) ليست JWT، فلا تُرسل في Authorization — تُرسل في apikey فقط.
-  const anonProbe = await call('/rest/v1/groups?select=id&limit=1', {
-    method: 'GET',
-    headers: { ...json(), apikey: ANON },
-  });
-  note('حالة المفتاح العام مع PostgREST', {
-    status: anonProbe.status,
-    code: anonProbe.body?.code ?? null,
-    hint: anonProbe.status === 401
-      ? 'مفتاح النشر قد لا يقبله PostgREST في هذا المشروع؛ لا يوقف الرحلة'
-      : null,
-  });
+  const anonProbe = await call('/rest/v1/groups?select=id&limit=1', { method: 'GET', headers: { ...json(), apikey: ANON } });
+  note('حالة المفتاح العام مع PostgREST', { status: anonProbe.status, code: anonProbe.body?.code ?? null });
 
   // ١) حسابات اصطناعية
-  const admin = await seedUser({ phone: ADMIN_PHONE, password: ADMIN_PASSWORD, role: 'super_admin', fullName: 'أدمن اختبار' });
+  const admin = await seedUser({ phone: ADMIN_PHONE, password: ADMIN_PASSWORD });
   record('تهيئة حساب السوبر أدمن', admin.ok, {
     user_id: admin.userId ?? null,
     has_profile: admin.hasProfile ?? false,
     create_status: admin.createStatus ?? null,
-    create_error: admin.createError ?? null,
     lookup_status: admin.lookupStatus ?? null,
   });
-  const teacher = await seedUser({ phone: TEACHER_PHONE, password: TEACHER_PASSWORD, role: 'teacher', fullName: 'مدرس اختبار' });
+  const teacher = await seedUser({ phone: TEACHER_PHONE, password: TEACHER_PASSWORD });
   record('تهيئة حساب المدرس', teacher.ok, {
     user_id: teacher.userId ?? null,
     has_profile: teacher.hasProfile ?? false,
   });
-  if (!admin.ok || !teacher.ok) return;
+  if (!admin.ok || !teacher.ok) {
+    skip('بقية الرحلة', 'تهيئة الحسابات لم تكتمل');
+    return;
+  }
 
   // ٢) دخول السوبر أدمن عبر الدالة الحقيقية
   const adminLogin = await login(ADMIN_PHONE, ADMIN_PASSWORD);
-  record('دخول السوبر أدمن', Boolean(adminLogin.token), { status: adminLogin.status });
-  if (!adminLogin.token) return;
-
+  const canAdmin = record('دخول السوبر أدمن', Boolean(adminLogin.token), {
+    status: adminLogin.status,
+    code: adminLogin.body?.error?.code ?? null,
+  });
   const adminHeaders = { ...json(), authorization: `Bearer ${adminLogin.token}` };
 
-  // ٣) دعوة مدرس عبر الدالة — يجب أن تُعيد رمزًا مرة واحدة
-  const invite = await call('/functions/v1/admin-teachers', {
-    method: 'POST',
-    headers: adminHeaders,
-    body: JSON.stringify({ action: 'invite', phone: TEACHER_PHONE, full_name: 'مدرس مدعو', headline: 'رياضيات' }),
-  });
-  // الدالة تُعيد رابط الدعوة كاملًا (والرمز داخله) لا الرمز وحده.
-  const inviteLink = invite.body?.data?.invite_link ?? invite.body?.invite_link ?? null;
-  const inviteToken =
-    invite.body?.data?.token ??
-    invite.body?.token ??
-    invite.body?.data?.invite_token ??
-    (typeof inviteLink === 'string' ? inviteLink.split('/').filter(Boolean).pop() : null);
-  record('دعوة مدرس من اللوحة', invite.status === 200 && Boolean(inviteToken), {
-    status: invite.status,
-    code: invite.body?.error?.code ?? null,
-    has_token: Boolean(inviteToken),
-    invitation_id: invite.body?.data?.invitation_id ?? null,
-  });
+  // ٣) دورة دعوة كاملة: دعوة هاتف جديد ثم قبولها ثم دخول صاحبها
+  const freshPhone = `+201${String(Date.now()).slice(-8)}`;
+  let inviteToken = null;
+  if (!canAdmin) {
+    skip('دعوة مدرس جديد', 'لا توكن سوبر أدمن');
+  } else {
+    const invite = await call('/functions/v1/admin-teachers', {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({ action: 'invite', phone: freshPhone, full_name: 'مدرس مدعو', headline: 'رياضيات' }),
+    });
+    const inviteLink = invite.body?.data?.invite_link ?? null;
+    // الرابط على صيغة <base>/pages/auth/accept-invitation.html?token=…
+    // فآخر مقطع من المسار هو اسم الصفحة لا الرمز — الرمز في معامل الاستعلام.
+    inviteToken = null;
+    if (inviteLink) {
+      try {
+        inviteToken = new URL(inviteLink).searchParams.get('token');
+      } catch {
+        inviteToken = null;
+      }
+      if (!inviteToken) {
+        const match = /[?&]token=([^&#]+)/.exec(inviteLink);
+        inviteToken = match ? decodeURIComponent(match[1]) : null;
+      }
+    }
+    record('دعوة مدرس من اللوحة', invite.status === 200 && Boolean(inviteToken), {
+      status: invite.status,
+      code: invite.body?.error?.code ?? null,
+      invitation_id: invite.body?.data?.invitation_id ?? null,
+      view_link: invite.body?.error?.code === 'FORBIDDEN' ? 'لا صلاحية' : undefined,
+    });
+  }
 
-  // ٤) محاولة كتابة أكاديمية بحساب السوبر أدمن — يجب أن تُرفض خادميًا
-  const academicWrite = await call('/rest/v1/groups', {
-    method: 'POST',
-    headers: {
-      ...json(),
-      // apikey لا يحدد الدور: الدور يأتي من JWT المستخدم أدناه. نستخدم مفتاحًا نعلم صحته.
-      apikey: SERVICE,
-      authorization: `Bearer ${adminLogin.token}`,
-      prefer: 'return=representation',
-    },
-    body: JSON.stringify([{ teacher_id: admin.userId, name: 'مجموعة غير مصرح بها', academic_year: '2026/2027' }]),
-  });
-  record('رفض الكتابة الأكاديمية بحساب الإدارة', academicWrite.status === 401 || academicWrite.status === 403, {
-    status: academicWrite.status,
-    code: academicWrite.body?.code ?? null,
-  });
+  // ٤) قبول الدعوة: إنشاء الحساب من الرابط نفسه
+  if (!inviteToken) {
+    skip('قبول الدعوة وإنشاء الحساب', 'لا رمز دعوة');
+  } else {
+    const accept = await call('/functions/v1/invite-accept', {
+      method: 'POST',
+      headers: json(),
+      body: JSON.stringify({
+        token: inviteToken,
+        full_name: 'مدرس مدعو',
+        password: TEACHER_PASSWORD,
+        identifier: freshPhone,
+      }),
+    });
+    record('قبول الدعوة وإنشاء الحساب', accept.status === 200, {
+      status: accept.status,
+      code: accept.body?.error?.code ?? null,
+      role: accept.body?.data?.profile?.role ?? null,
+    });
 
-  // ٥) دخول المدرس ثم إيقافه ثم محاولة وصول
+    const freshLogin = await login(freshPhone, TEACHER_PASSWORD);
+    record('دخول المدرس الجديد بعد قبول الدعوة', Boolean(freshLogin.token), {
+      status: freshLogin.status,
+      code: freshLogin.body?.error?.code ?? null,
+    });
+  }
+
+  // ٥) محاولة كتابة أكاديمية بحساب السوبر أدمن — يجب أن تُرفض خادميًا
+  if (!canAdmin) {
+    skip('رفض الكتابة الأكاديمية', 'لا توكن سوبر أدمن');
+  } else {
+    const academicWrite = await call('/rest/v1/groups', {
+      method: 'POST',
+      headers: { ...json(), apikey: SERVICE, authorization: `Bearer ${adminLogin.token}`, prefer: 'return=representation' },
+      body: JSON.stringify([{ teacher_id: admin.userId, name: 'مجموعة غير مصرح بها', academic_year: '2026/2027' }]),
+    });
+    record('رفض الكتابة الأكاديمية بحساب الإدارة', academicWrite.status === 403 || academicWrite.status === 401, {
+      status: academicWrite.status,
+      code: academicWrite.body?.code ?? null,
+    });
+  }
+
+  // ٦) الإيقاف: دخول المدرس ثم إيقافه ثم منع الدخول
   const teacherLogin = await login(TEACHER_PHONE, TEACHER_PASSWORD);
-  record('دخول المدرس', Boolean(teacherLogin.token), { status: teacherLogin.status });
+  record('دخول المدرس', Boolean(teacherLogin.token), { status: teacherLogin.status, code: teacherLogin.body?.error?.code ?? null });
 
-  const suspend = await call('/functions/v1/admin-teachers', {
-    method: 'POST',
-    headers: adminHeaders,
-    body: JSON.stringify({
-      action: 'set-status',
-      user_id: teacher.userId,
-      status: 'suspended',
-      reason: 'إيقاف اختباري من رحلة الفحص',
-    }),
-  });
-  record('إيقاف المدرس بسبب', suspend.status === 200, { status: suspend.status });
+  if (!canAdmin) {
+    skip('إيقاف المدرس', 'لا توكن سوبر أدمن');
+    skip('منع دخول المدرس الموقوف', 'لم يُوقَف');
+  } else {
+    const suspend = await call('/functions/v1/admin-teachers', {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({
+        action: 'set-status',
+        user_id: teacher.userId,
+        status: 'suspended',
+        reason: 'إيقاف اختباري من رحلة الفحص',
+      }),
+    });
+    record('إيقاف المدرس بسبب', suspend.status === 200, {
+      status: suspend.status,
+      code: suspend.body?.error?.code ?? null,
+      changed: suspend.body?.data?.changed ?? null,
+    });
 
-  const afterSuspend = await login(TEACHER_PHONE, TEACHER_PASSWORD);
-  record('المدرس الموقوف لا يدخل', afterSuspend.status !== 200 || !afterSuspend.token, {
-    status: afterSuspend.status,
-    code: afterSuspend.body?.error?.code ?? null,
-  });
+    const afterSuspend = await login(TEACHER_PHONE, TEACHER_PASSWORD);
+    record('منع دخول المدرس الموقوف', afterSuspend.status !== 200 || !afterSuspend.token, {
+      status: afterSuspend.status,
+      code: afterSuspend.body?.error?.code ?? null,
+    });
+  }
 
-  // ٦) تعليمات إدارية: المستلم هو المدرس لا غيره
-  const instruction = await call('/functions/v1/admin-instructions', {
-    method: 'POST',
-    headers: adminHeaders,
-    body: JSON.stringify({ action: 'send', title: 'اجتماع', body: 'نص التعليمات للاختبار', audience: 'teachers', user_ids: [teacher.userId] }),
-  });
-  record('إرسال تعليم لمدرس محدد', instruction.status === 200, {
-    status: instruction.status,
-    recipients: instruction.body?.data?.recipients ?? null,
-  });
+  // ٧) تعليمات إدارية للمدرس المحدد
+  if (!canAdmin) {
+    skip('إرسال تعليم لمدرس محدد', 'لا توكن سوبر أدمن');
+  } else {
+    const instruction = await call('/functions/v1/admin-instructions', {
+      method: 'POST',
+      headers: adminHeaders,
+      body: JSON.stringify({
+        action: 'send',
+        title: 'اجتماع',
+        body: 'نص التعليمات للاختبار',
+        audience: 'teachers',
+        user_ids: [teacher.userId],
+      }),
+    });
+    record('إرسال تعليم لمدرس محدد', instruction.status === 200, {
+      status: instruction.status,
+      code: instruction.body?.error?.code ?? null,
+      recipients: instruction.body?.data?.recipients ?? null,
+    });
+  }
 }
 
 main()
   .catch((error) => record('استثناء غير متوقع', false, { message: String(error?.message ?? error) }))
   .finally(() => {
-    const summary = { failed, steps: log.length, passed: log.filter((e) => e.ok).length };
+    const summary = {
+      failed,
+      steps: log.length,
+      passed: log.filter((e) => e.ok && !e.note && !e.skipped).length,
+      skipped: log.filter((e) => e.skipped).length,
+      notes: log.filter((e) => e.note).length,
+    };
     process.stdout.write(`\n== الملخص: ${JSON.stringify(summary)} ==\n`);
     try {
       writeFileSync('admin-journey-log.json', JSON.stringify({ summary, log }, null, 2), 'utf8');
