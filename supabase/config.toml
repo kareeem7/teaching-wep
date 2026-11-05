@@ -44,16 +44,15 @@ additional_redirect_urls = ["http://127.0.0.1:4173", "http://localhost:4173"]
 jwt_expiry = 3600
 enable_refresh_token_rotation = true
 refresh_token_reuse_interval = 10
-enable_signup = false
 enable_anonymous_sign_ins = false
 
 [auth.email]
-enable_signup = false
+enabled = false
 double_confirm_changes = true
 enable_confirmations = false
 
 [auth.sms]
-enable_signup = false
+enabled = false
 # لا مزوّد SMS مدفوعًا: يُنشأ المستخدم بهاتف مؤكَّد من الخادم (C-28)
 enable_confirmations = false
 

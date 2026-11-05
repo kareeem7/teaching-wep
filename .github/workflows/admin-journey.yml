@@ -73,7 +73,7 @@ jobs:
             echo "::error::السر SUPABASE_ACCESS_TOKEN غير مضبوط — لا يمكن النشر."
             exit 1
           fi
-          echo "نسخة CLI:"; npx --yes supabase@latest --version || true
+          echo "نسخة CLI:"; npx --yes "supabase@^3" --version || true
           # تشخيص آمن للتوكن: الطول وأول ٤ حروف فقط (لا تُطبع القيمة)
           echo "طول التوكن: ${#SUPABASE_ACCESS_TOKEN} · يبدأ بـ: ${SUPABASE_ACCESS_TOKEN:0:4} ·"
           echo "عدد الأسطر: $(printf %s "$SUPABASE_ACCESS_TOKEN" | wc -l)"
@@ -82,11 +82,11 @@ jobs:
             # وTS مجموعة شاملة لـJS، فننسخها باسم index.ts (المصدر index.js يبقى كما هو).
             cp "supabase/.bundles/${name}.js" "supabase/functions/${name}/index.ts"
             echo "→ نشر ${name} ($(wc -c <"supabase/functions/${name}/index.ts") بايت)"
-            if ! npx --yes supabase@latest functions deploy "${name}" \
-                 --project-ref "${{ inputs.project_ref }}"; then
+            if ! npx --yes "supabase@^3" functions deploy "${name}" \
+                 --remote="${{ inputs.project_ref }}" --yes; then
               echo "::warning::فشل النشر العادي — إعادة بمفتاح --debug لالتقاط السبب"
-              npx --yes supabase@latest functions deploy "${name}" \
-                --project-ref "${{ inputs.project_ref }}" --debug 2>&1 | tail -80 || true
+              npx --yes "supabase@^3" functions deploy "${name}" \
+                --remote="${{ inputs.project_ref }}" --yes --debug 2>&1 | tail -80 || true
               echo "::error::فشل نشر ${name} — راجع الرسالة أعلاه"
               exit 1
             fi
