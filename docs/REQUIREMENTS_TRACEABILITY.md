@@ -61,14 +61,16 @@
 | الدخول بالهاتف المعياري | `_shared/auth.js:normalizePhone` + `functions/auth-login` + `login.html` | منطق + واجهة: مفحوص · تنفيذ كامل: **BLOCKED** (لا قاعدة/دوال منشورة) |
 | الدخول بالكود (C-28) | `normalizeStudentCode` + R-26 (بريد داخلي اصطناعي) | مفحوص في الوحدة |
 | سياسة كلمات المرور | `validatePassword` (١٠ محارف، حروف+أرقام، رفض الشائع والمطابق للمعرّف) | ٦ حالات وحدة ✅ |
-| حدّ المعدل (٥/١٥د، ٢٠/س، ٣/س، ٥/يوم، ١٠/س) | `_shared/rate-limit.js` + `app.rate_limit_hit` | منطق ✅ · ذرّية SQL: غير مُنفَّذة |
+| حدّ المعدل (٥/١٥د، ٢٠/س، ٣/س، ٥/يوم، ١٠/س + ١٠/س لإكمال الاستعادة) | `_shared/rate-limit.js` + `svc_rate_limit_hit` | منطق ✅ + ١٨ اختبار دالة · ذرّية SQL: غير مُنفَّذة · **الاسم كان خاطئًا حتى F-13** |
 | إبطال الجلسات عند تغيير كلمة المرور | `app.invalidate_sessions` + `signOutGlobal` + `is_active()` | مكتوب |
-| دعوات المدرسين (٧٢ ساعة، مرة واحدة) | `app.invitations` + `consume_invitation` + `invite-accept` | مكتوب + حالات SQL مكتوبة |
+| دعوات المدرسين (٧٢ ساعة، مرة واحدة) | `app.invitations` + `svc_accept_invitation` (استهلاك + هوية + ربط في معاملة واحدة، R-30) | مكتوب + ١١ حالة SQL + ٥ اختبارات دالة · التنفيذ على قاعدة: **لم يجرِ** |
 | إغلاق التسجيل العام | لا مسار تسجيل في الواجهة ولا في الدوال | ✅ مثبت بالغياب |
-| ربط الطالب بدعوة وموافقة (C-08) | `student_link` + `svc_link_student_profile` | مكتوب |
-| عزل مساحات المدرسين | `teacher_id` في كل سياسة + `svc_workspaces` + ٧ حالات واجهة | واجهة ✅ · RLS غير مُنفَّذة |
-| وصول إداري أكاديمي للقراءة فقط | لا سياسة كتابة للسوبر أدمن؛ حالتا `throws_ok` | مكتوب |
-| سجل التدقيق | `app.audit_events` append-only + `app.audit()` | مكتوب |
+| ربط الطالب بدعوة وموافقة (C-08) | `student_link` داخل `svc_accept_invitation` + `svc_link_student_profile` | مكتوب · لا ربط تلقائي بالهاتف |
+| عزل مساحات المدرسين | `teacher_id` في كل سياسة + `svc_workspaces` + ٧ حالات واجهة | واجهة ✅ · RLS مكتوبة (٥١ حالة) **لم تُنفَّذ** |
+| نطاق مجموعات المساعد (R-32) | `app.assistant_has_full_scope` + `app.assistant_can_see_student` في سياسات الطلاب و`my_students` | مكتوب + ٤ حالات SQL |
+| لا إحياء لحساب موقوف بدعوة (R-31) | `svc_accept_identity` ترفض `suspended/archived` وخلط الأدوار | مكتوب + ٣ حالات |
+| وصول إداري أكاديمي للقراءة فقط | سياسات `*_select_admin` + `public.admin_students` (R-33)؛ لا سياسة كتابة أكاديمية | مكتوب + ٣ حالات SQL |
+| سجل التدقيق | `app.audit_events` append-only (UPDATE/DELETE/**TRUNCATE** مرفوضة) + `app.audit()` | مكتوب + ٢ حالات SQL + تدقيق محاولات الدعوة المرفوضة |
 | استعادة الدخول (C-09) | `auth-recovery` + `recovery_tokens` (٣٠ دقيقة، سبب إلزامي) | مكتوب |
 | إشعار داخلي عند الاستعادة | — | **غير منفّذ** (L-36) |
 | مصادقة ثنائية (R-09) | — | **خارج النطاق** (لم تُعتمد) |

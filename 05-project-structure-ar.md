@@ -78,7 +78,7 @@ eslint.config.js , .stylelintrc.json , .htmlhintrc
 playwright.config.js
 public/index.html
 public/pages/health.html
-public/pages/auth/login.html          # صفحة دخول شكلية حتى المرحلة ٠٢
+public/pages/auth/login.html          # صفحة دخول فعّالة (منذ المرحلة ٠٢؛ تعلن «الخادم غير منشور» عند غياب الإعداد)
 public/pages/errors/403.html , 404.html , 500.html
 public/pages/shared/app-shell.html    # تخطيط محمي فارغ (إصلاح H-01/H-02، R-23)
 public/assets/css/app.css
@@ -290,6 +290,7 @@ docs/PHASE_REPORTS/PHASE_12_BUILD.md , PHASE_12_CHECK.md
 |---|---|---|---|
 | 2026-11-04 | إضافة `public/pages/teacher/dashboard.html` و`public/assets/js/teacher/dashboard.js` إلى المرحلة ٠٤ | المهمة ٥ من برومبت المرحلة ٠٠ تطلب نموذج شاشة المدرس، ولم تكن الصفحة في أي مرحلة | G-04 في `docs/PROJECT_STATE.md` |
 | 2026-11-04 | إضافة `public/pages/shared/app-shell.html` إلى المرحلة ٠١ | تقرير الفحص `PHASE_01_CHECK` سجّل **H-01** (لا صفحة تحمل `data-requires-auth` فالحارس خامل) و**H-02** (لا هيكل دور). الصفحة تخطيط محمي فارغ بلا بيانات ولا أزرار وهمية، وتُستبدل بصفحات الأدوار في المرحلتين ٠٣–٠٤ | عيبان HIGH في `docs/PHASE_REPORTS/PHASE_01_CHECK.md` · R-23 |
+| 2026-11-05 | **بعد إصلاح فحص المرحلة ٠٢: بلا مسار جديد.** أُضيف `tests/unit/functions.test.js` (اختبارات مسارات الدوال، F-10) وعرض للقراءة `public.admin_students` (R-33) داخل `0005`. لا اسم وهمي ولا ملف فارغ. |
 | 2026-11-05 | **المرحلة ٠٢: لا مسار جديد ولا اسم معدَّل.** أُنشئت ملفات المرحلة بأسمائها (migrations 0002…0005 · `_shared/*` · `functions/*/index.js` · صفحات `pages/auth/*` · `assets/js/{auth,workspace,api}.js` · `tests/sql/identity_rls.test.sql` · `tests/unit/token-hash.test.js` · `tests/e2e/{auth,workspace-isolation}.spec.js`) | كلها في قائمة المرحلة ٠٢ أعلاه | `PHASE_02_BUILD.md` §٢ |
 | 2026-11-04 | إضافة `tests/unit/dom-shell.test.js` واعتماد `jsdom` كاعتماد تطوير | تنزيل متصفحات Playwright محجوب في بيئة الفحص، فبقيت حالات e2e بلا دليل محلي؛ اختبارات DOM تقرأ ملف الصفحة الحقيقي وتغطي الحارس والشريط الجانبي والحالة الفارغة والتنبيه | M-02 في `docs/PHASE_REPORTS/PHASE_01_CHECK.md` · R-24 |
 
