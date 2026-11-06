@@ -89,6 +89,7 @@
 | `node --test` | محلي | `# tests 108 · # pass 108 · # fail 0` |
 | CI #42222978943 | GitHub Actions @`8bf9771` | **completed/success** |
 | رحلة الإدارة #42222978875 | GitHub Actions @`8bf9771` | **completed/success** · `{"failed":false,"steps":23,"passed":20,"skipped":0,"notes":3}` |
+| CI + رحلة الإدارة | GitHub Actions @`9398841` (التزام هذا التقرير) | **success / success** — نفس الملخص: 20 PASS · 0 FAIL · 3 NOTE |
 
 الملاحظات الثلاث في الرحلة:
 
