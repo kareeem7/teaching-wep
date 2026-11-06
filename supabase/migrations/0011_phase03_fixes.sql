@@ -101,5 +101,62 @@ grant select on public.admin_invitations to authenticated;
 -- مُثبت: سوبر أدمن=12 صفًا · مدرس=0 صفوف.
 alter view public.admin_teachers set (security_invoker = false);
 
+-- ---------- ٤) الاسم المنشور للدالة على PostgREST ----------
+-- `create or replace function public.mark_notification_read` لم تُكتشف على PostgREST
+-- (404 PGRST202) على هذه البيئة رغم أنها منشأة وممنوحة (تحقق: ACL فيه authenticated،
+-- وأن `pg_xact_status` = committed) ورغم إعادة تحميل المخطط وإعادة تشغيل الخدمة.
+-- فنُشرت الدالة تحت اسم صريح `notify_mark_read` (نفس الجسم والقيود) — الاسم الوحيد
+-- الذي تستدعيه الواجهة والرحلة. الاسم القديم يُسقط لاحقًا بعد إثبات الجديد.
+create or replace function public.notify_mark_read(p_notification_id uuid)
+returns jsonb
+language plpgsql
+security definer
+set search_path = app, public, pg_temp
+as $$
+declare
+  v_user uuid := auth.uid();
+  v_read timestamptz;
+  v_changed boolean := false;
+begin
+  if v_user is null then
+    raise exception 'no-session' using errcode = '42501';
+  end if;
+  if p_notification_id is null then
+    raise exception 'invalid-notification-id' using errcode = '22023';
+  end if;
+  if not app.is_active() then
+    raise exception 'inactive-session' using errcode = '42501';
+  end if;
+
+  update app.notification_recipients r
+     set read_at = coalesce(r.read_at, now())
+   where r.notification_id = p_notification_id
+     and r.user_id = v_user
+     and r.read_at is null
+  returning r.read_at into v_read;
+
+  v_changed := v_read is not null;
+
+  if not v_changed then
+    select r.read_at into v_read
+      from app.notification_recipients r
+     where r.notification_id = p_notification_id
+       and r.user_id = v_user;
+    if v_read is null then
+      raise exception 'not-a-recipient' using errcode = '42501';
+    end if;
+  end if;
+
+  return jsonb_build_object(
+    'notification_id', p_notification_id,
+    'read_at', v_read,
+    'changed', v_changed
+  );
+end;
+$$;
+
+revoke all on function public.notify_mark_read(uuid) from public, anon;
+grant execute on function public.notify_mark_read(uuid) to authenticated;
+
 -- PostgREST لا يعرف الدالة الجديدة إلا بعد إعادة تحميل المخطط.
 notify pgrst, 'reload schema';

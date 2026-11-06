@@ -96,7 +96,7 @@ export function buildNotificationItem(row, handlers = {}) {
  * @returns {Promise<{changed: boolean, readAt: string|null}>}
  */
 export async function markNotificationRead(client, notificationId) {
-  const { data, error } = await client.rpc('mark_notification_read', {
+  const { data, error } = await client.rpc('notify_mark_read', {
     p_notification_id: notificationId,
   });
   if (error) {

@@ -462,7 +462,7 @@ async function browserProbeWithFallback(token, path) {
       skip('تعليم التنبيه كمقروء', 'لا تنبيهات');
       skip('رفض تعليم تنبيه غير المستلم', 'لا تنبيهات');
     } else {
-      const marked = await call('/rest/v1/rpc/mark_notification_read', {
+      const marked = await call('/rest/v1/rpc/notify_mark_read', {
         method: 'POST',
         headers: teacherHeaders,
         body: JSON.stringify({ p_notification_id: target.id }),
@@ -477,7 +477,7 @@ async function browserProbeWithFallback(token, path) {
       });
 
       // تنبيه لم يوجَّه لهذا المدرس: يجب أن يُرفض (42501) لا أن يُقبل بصمت
-      const foreign = await call('/rest/v1/rpc/mark_notification_read', {
+      const foreign = await call('/rest/v1/rpc/notify_mark_read', {
         method: 'POST',
         headers: teacherHeaders,
         body: JSON.stringify({ p_notification_id: '00000000-0000-4000-8000-0000000000ff' }),
