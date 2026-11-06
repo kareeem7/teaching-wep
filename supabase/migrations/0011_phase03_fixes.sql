@@ -93,3 +93,13 @@ commit;
 alter view public.admin_invitations set (security_invoker = false);
 revoke all on public.admin_invitations from anon;
 grant select on public.admin_invitations to authenticated;
+
+-- نفس العلّة في `admin_teachers`: قراءتها بـ`select=*` تنفَّذ بصلاحيات المستدعي
+-- فتصطدم بأعمدة مشتقة من `app.student_profiles` و`app.invitations`
+-- (42501 ⇒ 403 على PostgREST) رغم أن `count(*)` ينجح. فلترتها الذاتية
+-- `WHERE app.is_super_admin()` قائمة، فتحويلها إلى صلاحيات المالك آمن.
+-- مُثبت: سوبر أدمن=12 صفًا · مدرس=0 صفوف.
+alter view public.admin_teachers set (security_invoker = false);
+
+-- PostgREST لا يعرف الدالة الجديدة إلا بعد إعادة تحميل المخطط.
+notify pgrst, 'reload schema';
