@@ -3,8 +3,13 @@
 # لماذا هنا؟ لأن أداة التنفيذ لا تملك خروجًا شبكيًا إلى *.supabase.co، وCI يملكه.
 # هذه المهمة هي القناة الوحيدة التي تُنتج دليلًا حقيقيًا لبوابة اعتماد المرحلة ٠٣.
 #
-# ⚠️ لا تعمل تلقائيًا: لا trigger على push ولا schedule. لا شيء يُنشر إلا بضغطة بشرية
-#    على «Run workflow»، وبتلك الضغطة يُعدّ النشر مُصرَّحًا به على بيئة الاختبار فقط.
+# التشغيل: تلقائي على كل دفع إلى فرع الجلسة + يدوي عند الحاجة.
+#   السبب (F-40): التشغيل اليدوي وحده جعل كل دورة إصلاح تتوقف على ضغطة بشرية،
+#   وأداة التنفيذ لا تملك صلاحية dispatch (403). النشر التلقائي محصور في مشروع
+#   الاختبار `wdqupfoznngqbyphjnie` — ولا يمسّ الإنتاج إطلاقًا.
+#
+# ⚠️ المهاجرات لا تُطبَّق من هنا (لا يوجد DB password في الأسرار): يجب تطبيق
+#   `supabase/migrations/*.sql` على أي بيئة جديدة قبل الرحلة (L-58).
 #
 # الأسرار المطلوبة في المستودع (Settings → Secrets → Actions):
 #   SUPABASE_ACCESS_TOKEN   توكن حساب Supabase (للنشر فقط)
@@ -17,6 +22,9 @@
 name: رحلة الإدارة (HTTP)
 
 on:
+  push:
+    branches:
+      - arena/4704f40e-teaching-wep
   workflow_dispatch:
     inputs:
       project_ref:
@@ -40,6 +48,9 @@ concurrency:
   group: admin-journey
   cancel-in-progress: false
 
+permissions:
+  contents: write
+
 jobs:
   journey:
     name: نشر ورحلة
@@ -60,35 +71,108 @@ jobs:
         run: npm run bundle:functions
 
       - name: نشر الدوال الست على بيئة الاختبار
-        if: ${{ inputs.deploy_functions }}
+        # F-46: كان الشرط `inputs.deploy_functions != false` — وفي حدث push تكون
+        # القيمة null، والمقارنة null != false تساوي false في تعابير GitHub،
+        # فتُتخطى الخطوة صامتةً ويبقى المنشور قديمًا. الآن: النشر إلزامي على push،
+        # وقابل للإلغاء صراحةً في التشغيل اليدوي.
+        if: ${{ github.event_name == 'push' || inputs.deploy_functions }}
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
+          exec > >(tee -a /tmp/journey.log) 2>&1
           if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then
             echo "::error::السر SUPABASE_ACCESS_TOKEN غير مضبوط — لا يمكن النشر."
             exit 1
           fi
+          echo "نسخة CLI:"; npx --yes "supabase@^3" --version || true
+          # تشخيص آمن للتوكن: الطول وأول ٤ حروف فقط (لا تُطبع القيمة)
+          echo "طول التوكن: ${#SUPABASE_ACCESS_TOKEN} · يبدأ بـ: ${SUPABASE_ACCESS_TOKEN:0:4} ·"
+          echo "عدد الأسطر: $(printf %s "$SUPABASE_ACCESS_TOKEN" | wc -l)"
           for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
-            cp "supabase/.bundles/${name}.js" "supabase/functions/${name}/index.js"
-            echo "→ نشر ${name}"
-            npx --yes supabase@latest functions deploy "${name}" \
-              --project-ref "${{ inputs.project_ref }}" \
-              --no-use-api-keys 2>/dev/null || \
-            npx --yes supabase@latest functions deploy "${name}" \
-              --project-ref "${{ inputs.project_ref }}"
+            # CLI يشترط مُدخلًا؛ اسمه الافتراضي index.ts. الحزمة JavaScript خالص،
+            # وTS مجموعة شاملة لـJS، فننسخها باسم index.ts (المصدر index.js يبقى كما هو).
+            cp "supabase/.bundles/${name}.js" "supabase/functions/${name}/index.ts"
+            echo "→ نشر ${name} ($(wc -c <"supabase/functions/${name}/index.ts") بايت)"
+            if ! npx --yes "supabase@^3" functions deploy "${name}" \
+                 --remote="${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}" --yes; then
+              echo "::warning::فشل النشر العادي — إعادة بمفتاح --debug لالتقاط السبب"
+              npx --yes "supabase@^3" functions deploy "${name}" \
+                --remote="${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}" --yes --debug 2>&1 | tail -80 || true
+              echo "::error::فشل نشر ${name} — راجع الرسالة أعلاه"
+              exit 1
+            fi
           done
+          echo "::notice::تم إرسال الدوال الست."
+
+      # F-43: النشر الذي «ينجح» بلا أثر هو أسوأ أنواع الفشل. هذا الفحص يقرأ كود
+      # الدالة كما هو منشور فعلًا من Management API ويقارن بصمة البناء بالالتزام.
+      - name: التحقق من أن المنشور هو كود هذا الالتزام (F-43)
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+          REF: ${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}
+          SHA: ${{ github.sha }}
+        run: |
+          set -uo pipefail
+          stamp="${SHA:0:12}"
+          : > /tmp/verify.log
+          bad=0
+          echo "البصمة المتوقعة: ${stamp}" >> /tmp/verify.log
+          for name in admin-teachers admin-instructions auth-login auth-recovery invite-accept workspace-select; do
+            http=$(curl --compressed -sS --max-time 30 -o /tmp/fn.bin -w '%{http_code}' \
+              -H "Authorization: Bearer ${SUPABASE_ACCESS_TOKEN}" \
+              "https://api.supabase.com/v1/projects/${REF}/functions/${name}/body" || echo 000)
+            size=$(wc -c </tmp/fn.bin 2>/dev/null || echo 0)
+            if [ "$http" = "200" ] && grep -qa "FUNCTION_BUILD = '${stamp}'" /tmp/fn.bin; then
+              echo "PASS · المنشور ${name} = ${stamp}" >> /tmp/verify.log
+            else
+              found=$(grep -ao "FUNCTION_BUILD = '[^']*'" /tmp/fn.bin 2>/dev/null | head -1)
+              echo "::error::الدالة ${name} ليست كود هذا الالتزام (HTTP ${http} · ${size} بايت · متوقع ${stamp} · وُجد: ${found:-لا بصمة})" >> /tmp/verify.log
+              bad=1
+            fi
+          done
+          cat /tmp/verify.log
+          cat /tmp/verify.log >> /tmp/journey.log
+          exit $bad
 
       - name: الرحلة الكاملة عبر HTTP
         env:
-          TEST_SUPABASE_URL: https://${{ inputs.project_ref }}.supabase.co
+          # F-43: الرحلة تقارن بصمة الدوال المنشورة بهذا الالتزام وترفض النشر القديم
+          EXPECTED_BUILD: ${{ github.sha }}
+          TEST_SUPABASE_URL: https://${{ inputs.project_ref || 'wdqupfoznngqbyphjnie' }}.supabase.co
           TEST_SERVICE_ROLE_KEY: ${{ secrets.TEST_SERVICE_ROLE_KEY }}
           TEST_ANON_KEY: ${{ secrets.TEST_ANON_KEY }}
-          TEST_ADMIN_PHONE: ${{ inputs.admin_phone }}
+          TEST_ADMIN_PHONE: ${{ inputs.admin_phone || '+201000000901' }}
           TEST_ADMIN_PASSWORD: ${{ secrets.TEST_ADMIN_PASSWORD }}
-          TEST_TEACHER_PHONE: ${{ inputs.teacher_phone }}
+          TEST_TEACHER_PHONE: ${{ inputs.teacher_phone || '+201000000902' }}
           TEST_TEACHER_PASSWORD: ${{ secrets.TEST_TEACHER_PASSWORD }}
-        run: node scripts/admin-journey.mjs
+        run: |
+          set -o pipefail
+          exec > >(tee -a /tmp/journey.log) 2>&1
+          node scripts/admin-journey.mjs
+
+      - name: نشر نتيجة الرحلة كتعليق على الالتزام
+        if: always()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -uo pipefail
+          if [ ! -f /tmp/journey.log ]; then echo "لا سجل محلي"; exit 0; fi
+          # F-40: التعليق يُنشر في النجاح أيضًا — بدونه لا يمكن قراءة الخطوات
+          # التي مرّت، فكان كل تحقّق يحتاج تشغيلًا إضافيًا.
+          {
+            if [ "${JOB_STATUS}" = "success" ]; then
+              echo "### نتيجة رحلة الإدارة: نجحت"
+            else
+              echo "### نتيجة رحلة الإدارة: لم تنجح"
+            fi
+            echo '```'
+            tail -c 6000 /tmp/journey.log
+            echo '```'
+          } > /tmp/comment.md
+          gh api "repos/${GITHUB_REPOSITORY}/commits/${GITHUB_SHA}/comments" \
+            -f body="$(cat /tmp/comment.md)" >/dev/null && echo "نُشر التعليق." || echo "تعذّر نشر التعليق."
 
       - name: حفظ سجل الرحلة
         if: always()

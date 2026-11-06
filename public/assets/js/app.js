@@ -133,10 +133,12 @@ export async function bootstrap() {
             { label: 'نظرة عامة', href: `${base}pages/admin/dashboard.html`, current: page === 'admin-dashboard' },
             { label: 'المدرسون', href: `${base}pages/admin/teachers.html`, current: page === 'admin-teachers' || page === 'admin-teacher-detail' },
             { label: 'التعليمات', href: `${base}pages/admin/instructions.html`, current: page === 'admin-instructions' },
+            { label: 'سجل التدقيق', href: `${base}pages/admin/audit.html`, current: page === 'admin-audit' },
             { label: 'الرئيسية', href: `${base}index.html` },
           ]
         : [
-            { label: 'الرئيسية', href: `${base}index.html`, current: true },
+            { label: 'التنبيهات', href: `${base}pages/shared/notifications.html`, current: page === 'notifications' },
+            { label: 'الرئيسية', href: `${base}index.html`, current: false },
           ],
     });
   }
@@ -237,6 +239,16 @@ export async function initPage(doc = document) {
     const { initAdminInstructionsPage } = await import('./admin/instructions.js');
     await initAdminInstructionsPage();
     return 'admin-instructions';
+  }
+  if (page === 'admin-audit') {
+    const { initAdminAuditPage } = await import('./admin/audit.js');
+    await initAdminAuditPage();
+    return 'admin-audit';
+  }
+  if (page === 'notifications') {
+    const { initNotificationsPage } = await import('./notifications.js');
+    await initNotificationsPage();
+    return 'notifications';
   }
   if (page === 'select-workspace') {
     const [{ initSelectWorkspacePage }, { currentSession }] = await Promise.all([

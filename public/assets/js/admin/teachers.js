@@ -148,6 +148,7 @@ export async function initAdminTeachersPage(deps = {}) {
   const tbody = qs('[data-teachers-body]');
   const pageInfo = qs('[data-page-info]');
   const errorHost = qs('[data-admin-error]');
+  const invitationsErrorHost = qs('[data-invitations-error]');
   const inviteResult = qs('[data-invite-result]');
   const invitationsBody = qs('[data-invitations-body]');
   const searchInput = qs('[data-filter="q"]');
@@ -243,20 +244,42 @@ export async function initAdminTeachersPage(deps = {}) {
     }
   };
 
+  // D-03-A: تحميل الدعوات منفصل عن المدرسين. الخلط بينهما كان يجعل فشل قراءة
+  // الدعوات يُظهر «تعذّر تحميل قائمة المدرسين» ويهبط بالجدولين معًا.
+  const loadInvitations = async () => {
+    if (invitationsErrorHost) invitationsErrorHost.hidden = true;
+    try {
+      renderInvitations(await selectAll(client, 'admin_invitations'));
+      return { ok: true };
+    } catch (error) {
+      renderInvitations([]);
+      if (invitationsErrorHost) {
+        invitationsErrorHost.textContent =
+          error instanceof ApiClientError
+            ? `تعذّر تحميل دعوات المدرسين. ${error.message}`
+            : 'تعذّر تحميل دعوات المدرسين.';
+        invitationsErrorHost.hidden = false;
+      }
+      return { ok: false, error: 'invitations-failed' };
+    }
+  };
+
   const load = async () => {
     if (errorHost) errorHost.hidden = true;
+    let teachersOk = true;
     try {
       teachers = await selectAll(client, 'admin_teachers');
       renderTable();
-      renderInvitations(await selectAll(client, 'admin_invitations'));
-      return { allowed: true, count: teachers.length };
     } catch (error) {
+      teachersOk = false;
       if (errorHost) {
         errorHost.textContent = error instanceof ApiClientError ? error.message : 'تعذّر تحميل قائمة المدرسين.';
         errorHost.hidden = false;
       }
-      return { allowed: true, error: 'load-failed' };
     }
+    const invitations = await loadInvitations();
+    if (!teachersOk) return { allowed: true, error: 'load-failed' };
+    return { allowed: true, count: teachers.length, invitations: invitations.ok };
   };
 
   /** يظهر الرابط مرة واحدة فقط — الخادم لا يحتفظ إلا بالبصمة. */

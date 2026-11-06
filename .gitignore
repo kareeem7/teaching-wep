@@ -19,3 +19,6 @@ Thumbs.db
 
 # حزم دوال Edge المُولَّدة (R-38) — تُبنى ولا تُلتزم
 supabase/.bundles/
+
+# مخرجات رحلة CI (أثر يُرفع كـartifact لا يُلتزم)
+admin-journey-log.json

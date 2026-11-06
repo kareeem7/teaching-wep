@@ -81,7 +81,8 @@ export function createDb(options) {
       return { data: parsed, error: null };
     } catch (error) {
       const message = error instanceof Error && error.name === 'AbortError' ? 'timeout' : 'network';
-      throw apiError('UPSTREAM_UNAVAILABLE', { details: message });
+      // F-39: بلا اسم العملية كان كل 502 يقول «timeout» فقط ولا يُعرف أي نداء تعطّل.
+      throw apiError('UPSTREAM_UNAVAILABLE', { details: `${method} ${path} · ${message}` });
     } finally {
       clearTimeout(timer);
     }
@@ -150,6 +151,17 @@ export function createDb(options) {
         return request(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
           method: 'PUT',
           body: { password },
+        });
+      },
+      /**
+       * حظر/رفع حظر على مستوى GoTrue نفسه (ban_duration).
+       * لماذا؟ لأن رفض الدخول بعد إصدار التوكن لا يمنع إصداره: الحظر في المزوّد
+       * يوقف الدخول من المصدر ويجعل «منع الموقوف» حقيقة لا استنتاجًا (F-42).
+       */
+      setBan(userId, banned) {
+        return request(`/auth/v1/admin/users/${encodeURIComponent(userId)}`, {
+          method: 'PUT',
+          body: { ban_duration: banned ? '876000h' : 'none' },
         });
       },
       signOutGlobal(userId) {

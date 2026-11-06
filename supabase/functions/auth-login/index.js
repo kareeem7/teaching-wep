@@ -64,8 +64,10 @@ export async function handler(request, deps = {}) {
     await enforceRateLimit(db, { route: 'login:ip', key: ipKey, nowMs });
     await enforceRateLimit(db, { route: 'login:identifier', key: idKey, nowMs });
 
+    // GoTrue يخزّن الهاتف بأرقام فقط بلا '+' (صيغة E.164 بلا علامة زائد).
+    // إرسال '+' يجعل البحث لا يطابق الصف المخزَّن ⇒ فشل دخول وهمي.
     const credentials = identifier.kind === 'phone'
-      ? { phone: identifier.value, password }
+      ? { phone: identifier.value.replace(/^\+/, ''), password }
       : { email: syntheticEmailForCode(identifier.value), password };
 
     const { data: authData, error: authError } = await db.auth.signInWithPassword(credentials);
@@ -85,7 +87,9 @@ export async function handler(request, deps = {}) {
 
     const profile = Array.isArray(profileData) ? profileData[0] : profileData;
     if (profileError || !profile?.user_id) {
-      await db.auth.signOutGlobal(userId);
+      // F-39: إبطال الجلسة إجراء تعميق لا شرط صحة. تعذّره (مهلة/شبكة) كان يحوّل
+      // الرفض الصحيح 403 إلى 502 فيظهر كأن المنع «لا يعمل». نفصل النداء عن القرار.
+      await revokeSessionsSafe(db, userId, requestId);
       throw apiError('ACCOUNT_DISABLED', { requestId });
     }
 
@@ -94,8 +98,11 @@ export async function handler(request, deps = {}) {
       && isSessionStillValid({ issuedAtSeconds: Number(claims.iat), validAfterIso: profile.sessions_valid_after });
 
     if (!sessionOk) {
-      await db.auth.signOutGlobal(userId);
-      await safeAudit(db, 'login.blocked', userId, 'denied', { status: profile.status });
+      const revoked = await revokeSessionsSafe(db, userId, requestId);
+      await safeAudit(db, 'login.blocked', userId, 'denied', {
+        status: profile.status,
+        revoked_auth_sessions: revoked,
+      });
       throw apiError('ACCOUNT_DISABLED', { requestId });
     }
 
@@ -125,6 +132,23 @@ export async function handler(request, deps = {}) {
       });
     }
     return response;
+  }
+}
+
+/**
+ * إبطال جلسات GoTrue بلا إسقاط الطلب — قرار الرفض يُتخذ من قاعدة البيانات لا من نجاح النداء.
+ * يعيد `true` فقط إذا أكّد GoTrue الإبطال، ويُسجَّل الفشل بمعرّف الطلب.
+ * @returns {Promise<boolean>}
+ */
+async function revokeSessionsSafe(db, userId, requestId) {
+  try {
+    const result = await db.auth.signOutGlobal(userId);
+    const ok = !result?.error;
+    if (!ok) logError('auth-login', new Error('signOutGlobal-failed'), { requestId, step: 'signOutGlobal' });
+    return ok;
+  } catch (error) {
+    logError('auth-login', error, { requestId, step: 'signOutGlobal' });
+    return false;
   }
 }
 

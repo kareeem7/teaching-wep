@@ -44,10 +44,11 @@ function fakeDb(spec = {}) {
     auth: new Proxy(
       {},
       {
-        get: (_target, method) => (arg) => {
-          calls.push({ kind: 'auth', name: String(method), arg });
+        // يمرّر كل الوسائط: بعض دوال Auth تأخذ أكثر من مُدخل (مثل setBan(id, banned)).
+        get: (_target, method) => (...args) => {
+          calls.push({ kind: 'auth', name: String(method), arg: args[0], args });
           const fn = spec.auth?.[method];
-          return Promise.resolve(fn ? fn(arg) : { data: null, error: null });
+          return Promise.resolve(fn ? fn(...args) : { data: null, error: null });
         },
       },
     ),
@@ -463,7 +464,7 @@ function adminDb(spec = {}) {
   const role = spec.role ?? 'super_admin';
   const status = spec.status ?? 'active';
   return fakeDb({
-    auth: { getUser: () => ({ data: { user: { id: ADMIN_ID } }, error: null }) },
+    auth: { getUser: () => ({ data: { id: ADMIN_ID }, error: null }) },
     rpc: {
       svc_profile_context: () => ({ data: { user_id: ADMIN_ID, role, status }, error: null }),
       svc_rate_limit_hit: () => ({ data: 1, error: null }),
@@ -558,7 +559,7 @@ test('admin-teachers: قرار SQL مرفوض يُترجم إلى رمز API ص�
 test('admin-teachers: الإيقاف يحاول إبطال جلسات Auth ولا يُفشل الطلب عند فشله', async () => {
   const db = fakeDb({
     auth: {
-      getUser: () => ({ data: { user: { id: ADMIN_ID } }, error: null }),
+      getUser: () => ({ data: { id: ADMIN_ID }, error: null }),
       signOutGlobal: () => ({ data: null, error: { status: 500, body: {} } }),
     },
     rpc: {
@@ -646,4 +647,131 @@ test('audit: الحدث يُرسل عبر svc_audit بلا قيمة سرية', a
   assert.equal(call.args.p_detail.token, undefined);
   assert.equal(call.args.p_detail.reason, 'not-super-admin');
   assert.equal(call.args.p_outcome, 'denied');
+});
+
+// F-39: تعذّر إبطال جلسات GoTrue (مهلة/شبكة) كان يحوّل الرفض الصحيح إلى 502
+test('auth-login: فشل signOutGlobal لا يحوّل رفض الموقوف إلى 502 (F-39)', async () => {
+  const db = fakeDb({
+    rpc: {
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_profile_context: () => ({
+        data: { user_id: 'u-2', role: 'teacher', status: 'suspended', sessions_valid_after: null },
+        error: null,
+      }),
+    },
+    auth: {
+      signInWithPassword: () => ({
+        data: { access_token: fakeJwt({ sub: 'u-2', iat: Math.floor(Date.now() / 1000) }) },
+        error: null,
+      }),
+      signOutGlobal: () => {
+        throw new Error('upstream timeout');
+      },
+    },
+  });
+
+  const response = await authLogin(
+    jsonRequest('/auth-login', { identifier: '+201000000124', password: 'good-pass-9Xy' }),
+    { env: ENV, db },
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, 'ACCOUNT_DISABLED');
+});
+
+test('auth-login: فشل signOutGlobal مع حساب بلا ملف يبقى 403 لا 502 (F-39)', async () => {
+  const db = fakeDb({
+    rpc: {
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_profile_context: () => ({ data: [], error: null }),
+    },
+    auth: {
+      signInWithPassword: () => ({
+        data: { access_token: fakeJwt({ sub: 'u-3', iat: Math.floor(Date.now() / 1000) }) },
+        error: null,
+      }),
+      signOutGlobal: () => {
+        throw new Error('network');
+      },
+    },
+  });
+
+  const response = await authLogin(
+    jsonRequest('/auth-login', { identifier: '+201000000125', password: 'good-pass-9Xy' }),
+    { env: ENV, db },
+  );
+
+  assert.equal(response.status, 403);
+  assert.equal((await response.json()).code, 'ACCOUNT_DISABLED');
+});
+
+test('admin-teachers: الإيقاف يحظر الحساب في GoTrue نفسه (F-42)', async () => {
+  const bans = [];
+  const db = fakeDb({
+    auth: {
+      getUser: () => ({ data: { id: ADMIN_ID }, error: null }),
+      setBan: (id, banned) => {
+        bans.push({ id, banned });
+        return { data: {}, error: null };
+      },
+      signOutGlobal: () => ({ data: {}, error: null }),
+    },
+    rpc: {
+      svc_profile_context: () => ({ data: { user_id: ADMIN_ID, role: 'super_admin', status: 'active' }, error: null }),
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_admin_set_account_status: () => ({ data: { changed: true, user_id: TEACHER_ID, status: 'suspended' }, error: null }),
+    },
+  });
+
+  const response = await adminTeachers(
+    bearerRequest('/admin-teachers', { action: 'set-status', user_id: TEACHER_ID, status: 'suspended', reason: 'مخالفة سياسة' }, adminToken()),
+    { env: ADMIN_ENV, db },
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.data.identity_banned, true);
+  assert.deepEqual(bans, [{ id: TEACHER_ID, banned: true }], 'يجب حظر الحساب عند المزوّد لا الاكتفاء بإبطال الجلسات');
+});
+
+test('admin-teachers: إعادة التنشيط ترفع الحظر ولا تُبطل جلسات جديدة (F-42)', async () => {
+  const bans = [];
+  const db = fakeDb({
+    auth: {
+      getUser: () => ({ data: { id: ADMIN_ID }, error: null }),
+      setBan: (id, banned) => {
+        bans.push({ id, banned });
+        return { data: {}, error: null };
+      },
+      signOutGlobal: () => {
+        throw new Error('يجب ألا يُطلب إبطال الجلسات عند التنشيط');
+      },
+    },
+    rpc: {
+      svc_profile_context: () => ({ data: { user_id: ADMIN_ID, role: 'super_admin', status: 'active' }, error: null }),
+      svc_rate_limit_hit: () => ({ data: 1, error: null }),
+      svc_admin_set_account_status: () => ({ data: { changed: true, user_id: TEACHER_ID, status: 'active' }, error: null }),
+    },
+  });
+
+  const response = await adminTeachers(
+    bearerRequest('/admin-teachers', { action: 'set-status', user_id: TEACHER_ID, status: 'active', reason: 'انتهاء التحقيق' }, adminToken()),
+    { env: ADMIN_ENV, db },
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  assert.equal(payload.data.identity_banned, true);
+  assert.deepEqual(bans, [{ id: TEACHER_ID, banned: false }]);
+  assert.ok(!db.calls.some((call) => call.kind === 'auth' && call.name === 'signOutGlobal'));
+});
+
+// F-43: بصمة البناء في كل رد — بدونها لا يمكن كشف «نشر قديم»
+test('jsonResponse يحمل ترويسة x-function-build (F-43)', async () => {
+  const { jsonResponse, buildStamp, okResponse } = await import('../../supabase/functions/_shared/errors.js');
+  const direct = jsonResponse({ ok: true });
+  assert.equal(direct.headers.get('x-function-build'), 'dev', 'خارج الحزمة تكون البصمة dev');
+  assert.equal(buildStamp(), 'dev');
+  const ok = okResponse({ a: 1 });
+  assert.equal(ok.headers.get('x-function-build'), 'dev');
 });

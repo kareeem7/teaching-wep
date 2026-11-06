@@ -1,3 +1,4 @@
+/* global FUNCTION_BUILD */
 /**
  * أخطاء الـAPI: شكل واحد لكل الردود، ورسائل عربية لا تكشف وجود حساب أو تفاصيل داخلية.
  *
@@ -57,6 +58,11 @@ export function isApiError(value) {
   return value instanceof ApiError;
 }
 
+/** بصمة البناء المحقونة في الحزمة، أو 'dev' عند التشغيل من المصدر مباشرة. */
+export function buildStamp() {
+  return typeof FUNCTION_BUILD === 'string' && FUNCTION_BUILD.length > 0 ? FUNCTION_BUILD : 'dev';
+}
+
 /** يبني رأس JSON موحدًا. */
 export function jsonResponse(body, { status = 200, corsHeaders = {}, extraHeaders = {} } = {}) {
   return new Response(JSON.stringify(body), {
@@ -64,6 +70,8 @@ export function jsonResponse(body, { status = 200, corsHeaders = {}, extraHeader
     headers: {
       'content-type': 'application/json; charset=utf-8',
       'cache-control': 'no-store',
+      // F-43: بصمة البناء تُحقن عند التجميع؛ كشف «المنشور ليس كود هذا الالتزام».
+      'x-function-build': buildStamp(),
       ...corsHeaders,
       ...extraHeaders,
     },
@@ -83,6 +91,11 @@ export function toErrorResponse(error, { corsHeaders = {}, requestId = null, hea
       code: apiErr.code,
       message: apiErr.message,
       request_id: rid,
+      // F-43: البصمة في الجسم أيضًا — بعض البوابات تُسقط الترويسات المخصصة.
+      build: buildStamp(),
+      // تفاصيل التشغيل (رموز داخلية مثل audience/recipients) لا تحمل سرًا،
+      // وغيابها جعل تشخيص رفض 400/500 يستهلك محاولات كاملة (F-37).
+      ...(apiErr.details === null || apiErr.details === undefined ? {} : { details: apiErr.details }),
       ...(apiErr.retryable ? { retryable: true } : {}),
     },
     { status: apiErr.status, corsHeaders, extraHeaders: headers },

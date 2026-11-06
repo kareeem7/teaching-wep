@@ -14,6 +14,7 @@
  * التشغيل: node scripts/bundle-functions.mjs [اسم الدالة ...]
  * الإخراج: supabase/.bundles/<name>.js  (مُستثنى من Git عبر .gitignore)
  */
+import { execSync } from 'node:child_process';
 import { mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -116,13 +117,32 @@ function bundle(entry) {
   return output;
 }
 
+/**
+ * بصمة البناء: تُحقن في الحزمة وتُعاد في كل رد كترويسة `x-function-build`.
+ * الغرض (F-43): كشف «نشر قديم» — يوم أن تكون الدالة المنشورة ليست كود هذا الالتزام
+ * يتحول كل تشخيص إلى تخمين. لا سرّ في البصمة، وهي SHA للالتزام لا أكثر.
+ */
+function buildStamp() {
+  const fromCi = process.env.GITHUB_SHA;
+  if (fromCi && /^[0-9a-f]{7,40}$/i.test(fromCi)) return fromCi.slice(0, 12).toLowerCase();
+  try {
+    return execSync('git rev-parse HEAD', { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] })
+      .trim()
+      .slice(0, 12)
+      .toLowerCase();
+  } catch {
+    return 'dev';
+  }
+}
+
+const BUILD = buildStamp();
 const targets = process.argv.slice(2).length > 0 ? process.argv.slice(2) : DEFAULT_TARGETS;
 mkdirSync(OUT_DIR, { recursive: true });
 
 for (const name of targets) {
   const entry = resolve(FUNCTIONS_DIR, name, 'index.js');
   const output = bundle(entry);
-  const banner = `// ملف مُولَّد آليًا بواسطة scripts/bundle-functions.mjs — لا يُعدَّل يدويًا.\n// المصدر: supabase/functions/${name}/ — انظر R-38.\n`;
+  const banner = `// ملف مُولَّد آليًا بواسطة scripts/bundle-functions.mjs — لا يُعدَّل يدويًا.\n// المصدر: supabase/functions/${name}/ — انظر R-38.\nconst FUNCTION_BUILD = '${BUILD}';\n`;
   const outPath = resolve(OUT_DIR, `${name}.js`);
   writeFileSync(outPath, `${banner}${output}\n`, 'utf8');
   process.stdout.write(`${name}: ${output.split('\n').length} سطرًا → ${outPath}\n`);

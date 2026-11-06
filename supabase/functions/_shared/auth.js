@@ -339,7 +339,10 @@ export function decodeJwtPayload(token) {
 export async function requireSession(db, token) {
   if (typeof token !== 'string' || token.split('.').length !== 3) throw apiError('INVALID_SESSION');
   const { data, error } = await db.auth.getUser(token);
-  if (error || !data?.user?.id) throw apiError('INVALID_SESSION');
+  // GoTrue يُعيد كائن المستخدم في الجذر: { id, aud, role, … }، لا { user: {…} }.
+  // الاعتماد على الشكل المتداخل وحده جعل كل طلب مُصادَق يرد 401 (F-36).
+  const userId = data?.user?.id ?? data?.id;
+  if (error || !userId) throw apiError('INVALID_SESSION');
 
   const claims = decodeJwtPayload(token) ?? {};
   const issuedAt = Number(claims.iat);
@@ -348,7 +351,7 @@ export async function requireSession(db, token) {
     throw apiError('INVALID_SESSION', { details: 'session-too-old' });
   }
 
-  return { userId: data.user.id, issuedAt, claims };
+  return { userId, issuedAt, claims };
 }
 
 /**
