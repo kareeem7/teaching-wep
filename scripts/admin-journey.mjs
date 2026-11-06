@@ -472,6 +472,8 @@ async function browserProbeWithFallback(token, path) {
         status: marked.status,
         changed: marked.body?.changed ?? null,
         code: marked.body?.code ?? null,
+        message: marked.body?.message ?? null,
+        hint: marked.body?.hint ?? null,
       });
 
       // تنبيه لم يوجَّه لهذا المدرس: يجب أن يُرفض (42501) لا أن يُقبل بصمت
@@ -483,6 +485,7 @@ async function browserProbeWithFallback(token, path) {
       record('رفض تعليم تنبيه غير المستلم', foreign.status === 403 || foreign.status === 404, {
         status: foreign.status,
         code: foreign.body?.code ?? null,
+        message: foreign.body?.message ?? null,
       });
     }
   }
