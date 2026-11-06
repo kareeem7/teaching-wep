@@ -103,3 +103,18 @@ register_duplicate_code → ERR 23505 local-code-taken
 | **L-61** | `app.student_profiles_needs_a_contact` مُقيَّد `not valid` لأن صفوفًا قديمة بلا رقم قد توجد؛ يُطبَّق كاملًا بعد تنظيف بيانات الاختبار |
 | **L-62** | فحص التقاطع الزمني بين مجموعتين مختلفتين **تنبيه في الواجهة فقط** (لا قيد في القاعدة) — قرار متعمّد: التقاطع قد يكون مشروعًا (مجموعتان في نفس القاعة) |
 | **L-58** (قائم) | المهاجرات تُطبَّق يدويًا؛ بيئة الاختبار الآن حتى `0013` |
+
+---
+
+## ٥. جولة إصلاح ما بعد فحص ٠٤ (FAIL → إصلاح)
+
+| العيب | الإصلاح | الدليل |
+|---|---|---|
+| **H-01** المدرس المالك لا يرى موارده | `0016_owner_membership.sql`: `app.ensure_owner_membership` + مُشغِّل على `app.teachers` + تعبئة رجعية (خيار «أ» = R-28) | بعد التطبيق: `is_workspace_member(owner)=true` · المدرس يرى صفّه فقط (المدرس الآخر يرى صفّه) · `locations` تُقرأ وتُكتب بـ`returning` |
+| **H-02** إنشاء مكان يفشل 42501 | يُغلق تلقائيًا بـH-01 | `insert … returning id` ⇒ `ok` |
+| **H-04** لا مسار تحويل/أرشفة | `0017_students_groups_flows.sql`: `group_member_add/remove/transfer` · `student_update` · `entity_archive` + ٥ أغلفة `svc_*` | إضافة لمجموعتين ⇒ إجمالي فريد ١ · تحويل ⇒ `closed 2 / opened 1` · صفوف ٣ (سارية ١، تاريخ ٢) · أرشفة مجموعة تُغلق عضوياتها |
+| **M-05** انحراف revoke | طُبِّق `revoke insert, update, delete on app.student_profiles from authenticated` | `has_table_privilege` → `insert=false` · الإدراج المباشر ⇒ `42501 permission denied` |
+
+**حراسات جديدة مُثبتة تنفيذيًا:** مساعد بنطاق `groups:write` على A فقط ⇒ تحويل إلى B يرجع `42501 not-allowed` · تعديل طالب من مساعد بلا `students:write` ⇒ `42501` · تحويل لا يغيّر شيئًا ⇒ `22023 transfer-noop` · حقل محظور في التعديل ⇒ `22023 field-not-allowed`.
+
+**المتبقي:** الدفعة الرابعة (٣ دوال Edge · ٨ صفحات · ٤ وحدات JS · اختبار SQL · e2e) + تحديث `05-project-structure-ar.md` و`DECISIONS` (M-07) + تنظيف بيانات الاختبار (L-09).
