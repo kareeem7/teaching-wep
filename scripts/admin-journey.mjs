@@ -299,30 +299,6 @@ async function browserProbeWithFallback(token, path) {
     record('قراءة عروض الإدارة بجلسة المتصفح', allReadable, { statuses });
   }
 
-  // ٢.٦) مسبار تشخيصي مؤقت: هل يرى PostgREST الدالة الجديدة؟ وبأي دور؟
-  {
-    const rpcBody = JSON.stringify({ p_notification_id: '00000000-0000-4000-8000-0000000000ff' });
-    const asService = await call('/rest/v1/rpc/svc_admin_stats', {
-      method: 'POST', headers: { ...json(), apikey: SERVICE, authorization: `Bearer ${SERVICE}` },
-      body: JSON.stringify({ p_actor: '00000000-0000-4000-8000-000000000001' }),
-    });
-    const newAsService = await call('/rest/v1/rpc/notify_mark_read', {
-      method: 'POST', headers: { ...json(), apikey: SERVICE, authorization: `Bearer ${SERVICE}` }, body: rpcBody,
-    });
-    const newAsUser = canAdmin
-      ? await call('/rest/v1/rpc/notify_mark_read', {
-        method: 'POST', headers: { ...json(), apikey: SERVICE, authorization: `Bearer ${adminLogin.token}` }, body: rpcBody,
-      })
-      : { status: null, body: null };
-    note('مسبار RPC مؤقت', {
-      existing_as_service: asService.status,
-      new_as_service: newAsService.status,
-      new_as_user: newAsUser.status,
-      new_as_service_code: newAsService.body?.code ?? null,
-      new_as_user_code: newAsUser.body?.code ?? null,
-    });
-  }
-
   // ٣) دورة دعوة كاملة: دعوة هاتف جديد ثم قبولها ثم دخول صاحبها
   const freshPhone = `+201${String(Date.now()).slice(-8)}`;
   let inviteToken = null;
@@ -470,7 +446,9 @@ async function browserProbeWithFallback(token, path) {
       method: 'GET',
       headers: { apikey: ANON, authorization: `Bearer ${teacherLogin.token}` },
     });
-    const teacherHeaders = { apikey: ANON, authorization: `Bearer ${teacherLogin.token}` };
+    // `json()` ضرورية لنداءات RPC: بدون Content-Type: application/json لا يطابق
+    // PostgREST الوسائط فيردّ 404 PGRST202 («الدالة غير موجودة») بدل تنفيذها.
+    const teacherHeaders = { ...json(), apikey: ANON, authorization: `Bearer ${teacherLogin.token}` };
     if (inbox.status === 401) {
       teacherHeaders.apikey = SERVICE;
       inbox = await call('/rest/v1/my_notifications?select=id,title,read_at', { method: 'GET', headers: teacherHeaders });
