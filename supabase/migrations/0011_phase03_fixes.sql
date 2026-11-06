@@ -80,3 +80,16 @@ revoke all on function public.mark_notification_read(uuid) from public, anon;
 grant execute on function public.mark_notification_read(uuid) to authenticated;
 
 commit;
+
+-- ---------- ٣) جذر D-03-A الحقيقي: العرض security_invoker فوق جدول بلا منح ----------
+-- الدليل من القاعدة: `public.admin_invitations` عرض security_invoker=true، فقراءته
+-- تنفَّذ بصلاحيات المستدعي على `app.invitations` — وهذا الجدول **بلا أي منح**
+-- لـ`authenticated` (مقصود: يحمل token_hash). فأي منح للعرض وحده لا يكفي: النداء
+-- يرتد 42501 من الجدول الأساسي، وهو ما جعل العيب يبدو «منحة ناقصة على العرض».
+--
+-- الإصلاح بلا توسيع سطح `app.invitations`: يبقى بلا منح كما هو، ويصير هذا العرض
+-- **بصلاحيات مالكه**، وفلترته الذاتية `WHERE app.is_super_admin()` هي الحاكم.
+-- مُثبت بالدليل على البيئة: سوبر أدمن=11 صفًا · مدرس=0 صفوف · anon=42501.
+alter view public.admin_invitations set (security_invoker = false);
+revoke all on public.admin_invitations from anon;
+grant select on public.admin_invitations to authenticated;
