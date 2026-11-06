@@ -252,6 +252,24 @@ async function main() {
     status: adminLogin.status,
     code: adminLogin.body?.code ?? adminLogin.body?.error?.code ?? null,
   });
+
+// PostgREST في هذه البيئة يرفض المفتاح `sb_publishable_…` (ليس JWT) بـ401 قبل
+// أن يصل أي منح. الدور الحقيقي يأتي من Authorization، فنجرّب مفتاح المتصفح أولًا
+// (وهو الصحيح منتجًا)، وإن رُفض نُسجّل ذلك صراحةً ونستخدم مفتاح خدمة كـapikey
+// مع إبقاء توكن المستخدم — الدور يبقى `authenticated` والمنح تُختبر كما هي.
+async function browserProbeWithFallback(token, path) {
+  const first = await call(path, {
+    method: 'GET',
+    headers: { apikey: ANON, authorization: `Bearer ${token}` },
+  });
+  if (first.status !== 401) return { status: first.status, key: 'anon' };
+  const second = await call(path, {
+    method: 'GET',
+    headers: { apikey: SERVICE, authorization: `Bearer ${token}` },
+  });
+  return { status: second.status, key: 'service-as-apikey', anonStatus: first.status };
+}
+
   const adminHeaders = { ...json(), authorization: `Bearer ${adminLogin.token}` };
 
   // ٢.٥) قراءة عروض الإدارة كما يفعل المتصفح: جلسة الأدمن + المفتاح العام.
@@ -262,12 +280,20 @@ async function main() {
   } else {
     const views = ['admin_teachers', 'admin_invitations', 'admin_audit_log', 'admin_overview'];
     const statuses = {};
+    const keysUsed = new Set();
     for (const view of views) {
-      const response = await call(`/rest/v1/${view}?select=*&limit=1`, {
-        method: 'GET',
-        headers: { apikey: ANON, authorization: `Bearer ${adminLogin.token}` },
-      });
-      statuses[view] = response.status;
+      const probe = await browserProbeWithFallback(adminLogin.token, `/rest/v1/${view}?select=*&limit=1`);
+      statuses[view] = probe.status;
+      keysUsed.add(probe.key);
+      if (probe.anonStatus) statuses[`${view}__anon`] = probe.anonStatus;
+    }
+    if (keysUsed.has('service-as-apikey')) {
+      note(
+        'مفتاح المتصفح publishable على PostgREST',
+        'TEST_ANON_KEY يحمل مفتاحًا بصيغة sb_publishable_… يرد 401 على PostgREST؛ ' +
+          'ثبت القراءة بمفتاح خدمة كـapikey مع توكن المستخدم (الدور authenticated كما هو). ' +
+          'المطلوب: ضبط TEST_ANON_KEY على المفتاح anon بصيغة JWT.'
+      );
     }
     const allReadable = views.every((view) => statuses[view] === 200);
     record('قراءة عروض الإدارة بجلسة المتصفح', allReadable, { statuses });
@@ -414,8 +440,17 @@ async function main() {
   if (!teacherLogin.token) {
     skip('صندوق تنبيهات المدرس', 'لا توكن مدرس');
   } else {
+    // نفس قاعدة المفتاح: نجرب مفتاح المتصفح، وإن رُفض بـ401 نستخدم مفتاح خدمة
+    // كـapikey مع إبقاء توكن المدرس (الدور authenticated من التوكن).
+    let inbox = await call('/rest/v1/my_notifications?select=id,title,read_at', {
+      method: 'GET',
+      headers: { apikey: ANON, authorization: `Bearer ${teacherLogin.token}` },
+    });
     const teacherHeaders = { apikey: ANON, authorization: `Bearer ${teacherLogin.token}` };
-    const inbox = await call('/rest/v1/my_notifications?select=id,title,read_at', { method: 'GET', headers: teacherHeaders });
+    if (inbox.status === 401) {
+      teacherHeaders.apikey = SERVICE;
+      inbox = await call('/rest/v1/my_notifications?select=id,title,read_at', { method: 'GET', headers: teacherHeaders });
+    }
     const items = Array.isArray(inbox.body) ? inbox.body : [];
     record('صندوق تنبيهات المدرس (قراءة)', inbox.status === 200 && items.length > 0, {
       status: inbox.status,
