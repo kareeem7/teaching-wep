@@ -131,3 +131,36 @@
 > 3. **D-03-C:** أضف بحثًا وفلاتر (الفاعل/الإجراء/النتيجة/المدى الزمني) وترقيمًا لسجل التدقيق في صفحة مخصّصة، بنفس صلاحية العرض الحالية.
 >
 > **ممنوع في هذا الإصلاح:** توسيع منح `app.invitations`، أو تعديل مهاجرة مطبَّقة بشكل يكسر بيئة قائمة، أو لمس الإنتاج، أو تغيير معايير القبول. أعد تشغيل: `lint`، `node --test`، رحلة الإدارة، وCI، وأرفق مخرجاتها كما هي.
+
+---
+
+## ٧. سجل الإصلاح والتحقق (بعد حكم FAIL أعلاه)
+
+هذا القسم **لا يغيّر الحكم**؛ الحكم يعود لفحص مستقل جديد. غايته تثبيت ما نُفِّذ وما أُثبت بالدليل.
+
+### ٧.١ ما نُفِّذ
+
+| العيب | الإصلاح | الملف |
+|---|---|---|
+| D-03-A | فصل تحميل الدعوات عن المدرسين بمضيف خطأ مستقل | `public/assets/js/admin/teachers.js` · `pages/admin/teachers.html` |
+| D-03-A (الجذر) | `admin_invitations` و`admin_teachers` صارا بصلاحيات مالكهما مع بقاء فلترة `app.is_super_admin()`؛ **بلا أي منح جديد على `app.invitations`** | `supabase/migrations/0011_phase03_fixes.sql` |
+| D-03-B | صفحة صندوق تنبيهات + `unreadCount`/`sortNotifications` + تعليم القراءة عبر دالة `public.mark_notification_read(uuid)` تأخذ الهوية من `auth.uid()` ولا تقبل معرّف مستخدم | `pages/shared/notifications.html` · `assets/js/notifications.js` · `0011` |
+| D-03-C | صفحة سجل تدقيق ببحث وفلاتر (إجراء/نتيجة/مدى زمني) وترقيم ١٥ | `pages/admin/audit.html` · `assets/js/admin/audit.js` |
+| الحرس | اختبارات وحدة تمنع انحراف ACL على المهاجرات | `tests/unit/phase03-admin-ui.test.js` |
+
+### ٧.٢ الأدلة المقيسة على بيئة الاختبار
+
+**جذر D-03-A الحقيقي (تشخيص أدق من التقرير الأصلي):** لم يكن العيب منحة ناقصة على العرض، بل أن `public.admin_invitations` عرض `security_invoker=true` يقرأ `app.invitations` **الذي بلا أي منح**؛ فكل منح للعرض وحده يرتد `42501` من الجدول الأساسي.
+
+| القياس | سوبر أدمن | مدرس | anon |
+|---|---|---|---|
+| `public.admin_invitations` | 11 صفًا | **0 صف** | `42501` |
+| `public.admin_teachers` | 12 صفًا | **0 صف** | `—` |
+| `mark_notification_read(uuid)` | — | ✅ `changed:true` لمستلمه · مواد غيره `42501` · `null` ⇒ `22023` | لا تنفيذ |
+
+**رحلة الإدارة على `16e4050`:** `PASS · قراءة عروض الإدارة بجلسة المتصفح` (`admin_teachers`/`admin_invitations`/`admin_audit_log`/`admin_overview` = 200 بجلسة المستخدم)، و19 PASS / 1 FAIL.
+
+### ٧.٣ المفتوح وقت كتابة هذا السجل
+
+1. `mark_notification_read` يرد **404 PGRST202** عبر PostgREST رغم وجودها ومنحها وإعادة تحميل المخطط — قيد بيئة قيد التشخيص.
+2. `TEST_ANON_KEY` في GitHub يحمل مفتاحًا بصيغة `sb_publishable_…` يرد 401 على PostgREST؛ الرحلة تسجّل ذلك NOTE وتقرأ بمفتاح خدمة كـ`apikey` مع توكن المستخدم (الدور يبقى `authenticated`).
