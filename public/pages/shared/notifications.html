@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="صندوق تنبيهاتك: تعليمات الإدارة الموجّهة إليك وحدك. لا يظهر لك تنبيه غيرك، والقرار على الخادم.">
+  <meta name="theme-color" content="#0b3b5a">
+  <meta name="app-version" content="0.3.0">
+  <meta name="minhaj-supabase-url" content="">
+  <meta name="minhaj-supabase-key" content="">
+  <title>مِنهاج — صندوق التنبيهات</title>
+  <link rel="stylesheet" href="../../assets/vendor/bootstrap/bootstrap.rtl.min.css">
+  <link rel="stylesheet" href="../../assets/css/app.css">
+</head>
+<body data-page-depth="nested" data-page="notifications" data-requires-auth="true" data-role-label="حسابي">
+  <a class="skip-link" href="#main">تجاوز إلى المحتوى</a>
+  <p class="visually-hidden-mh" data-live-region role="status" aria-live="polite"></p>
+
+  <div data-component="navbar"></div>
+
+  <div class="app-shell">
+    <div data-component="sidebar"></div>
+
+    <div class="app-main">
+      <main id="main" class="app-content">
+        <h1>صندوق التنبيهات</h1>
+
+        <div class="alert alert-info" role="status">
+          تُعرض هنا <strong>التعليمات الموجّهة إليك وحدك</strong>. لا يستطيع أي حساب آخر قراءتها
+          ولو غيّر معرّفًا في العنوان، ولا يمكن تعليم تنبيه غيرك كمقروء — القرار على الخادم.
+        </div>
+
+        <p class="text-danger-mh" data-notifications-error role="alert" hidden></p>
+
+        <section class="card-mh" aria-labelledby="inbox-heading">
+          <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <h2 class="card-mh__title mb-0" id="inbox-heading">التنبيهات</h2>
+            <p class="text-muted-mh mb-0" data-unread-summary aria-live="polite">—</p>
+          </div>
+
+          <ul class="list-group list-group-flush" data-notifications-list></ul>
+          <p class="text-muted-mh mt-3 mb-0" data-notifications-empty hidden>لا تنبيهات بعد.</p>
+        </section>
+      </main>
+
+      <footer class="app-footer">
+        مِنهاج · الإصدار 0.3.0 · <span class="tnum" data-current-year></span>
+      </footer>
+    </div>
+  </div>
+
+  <script src="../../assets/vendor/supabase/supabase.umd.js"></script>
+  <script type="module" src="../../assets/js/app.js"></script>
+</body>
+</html>

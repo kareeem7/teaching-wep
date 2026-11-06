@@ -254,6 +254,25 @@ async function main() {
   });
   const adminHeaders = { ...json(), authorization: `Bearer ${adminLogin.token}` };
 
+  // ٢.٥) قراءة عروض الإدارة كما يفعل المتصفح: جلسة الأدمن + المفتاح العام.
+  // هذا هو المسار الذي كشف D-03-A: الرحلة كانت تقرأ بمفتاح الخدمة فتتجاوز منح
+  // `authenticated` وتُخفي رفض 42501 على قائمة الدعوات.
+  if (!canAdmin) {
+    skip('قراءة عروض الإدارة بجلسة المتصفح', 'لا توكن سوبر أدمن');
+  } else {
+    const views = ['admin_teachers', 'admin_invitations', 'admin_audit_log', 'admin_overview'];
+    const statuses = {};
+    for (const view of views) {
+      const response = await call(`/rest/v1/${view}?select=*&limit=1`, {
+        method: 'GET',
+        headers: { apikey: ANON, authorization: `Bearer ${adminLogin.token}` },
+      });
+      statuses[view] = response.status;
+    }
+    const allReadable = views.every((view) => statuses[view] === 200);
+    record('قراءة عروض الإدارة بجلسة المتصفح', allReadable, { statuses });
+  }
+
   // ٣) دورة دعوة كاملة: دعوة هاتف جديد ثم قبولها ثم دخول صاحبها
   const freshPhone = `+201${String(Date.now()).slice(-8)}`;
   let inviteToken = null;
@@ -389,6 +408,48 @@ async function main() {
       message: instruction.body?.message ?? null,
       details: instruction.body?.details ?? null,
     });
+  }
+
+  // ٨.٥) صندوق التنبيهات من طرف المستلم (D-03-B): قراءة، تعليم مقروء، ورفض تنبيه غيره
+  if (!teacherLogin.token) {
+    skip('صندوق تنبيهات المدرس', 'لا توكن مدرس');
+  } else {
+    const teacherHeaders = { apikey: ANON, authorization: `Bearer ${teacherLogin.token}` };
+    const inbox = await call('/rest/v1/my_notifications?select=id,title,read_at', { method: 'GET', headers: teacherHeaders });
+    const items = Array.isArray(inbox.body) ? inbox.body : [];
+    record('صندوق تنبيهات المدرس (قراءة)', inbox.status === 200 && items.length > 0, {
+      status: inbox.status,
+      count: items.length,
+    });
+
+    const target = items.find((item) => !item.read_at) ?? items[0];
+    if (!target?.id) {
+      skip('تعليم التنبيه كمقروء', 'لا تنبيهات');
+      skip('رفض تعليم تنبيه غير المستلم', 'لا تنبيهات');
+    } else {
+      const marked = await call('/rest/v1/rpc/mark_notification_read', {
+        method: 'POST',
+        headers: teacherHeaders,
+        body: JSON.stringify({ p_notification_id: target.id }),
+      });
+      const readAt = marked.body?.read_at ?? null;
+      record('تعليم التنبيه كمقروء', marked.status === 200 && Boolean(readAt), {
+        status: marked.status,
+        changed: marked.body?.changed ?? null,
+        code: marked.body?.code ?? null,
+      });
+
+      // تنبيه لم يوجَّه لهذا المدرس: يجب أن يُرفض (42501) لا أن يُقبل بصمت
+      const foreign = await call('/rest/v1/rpc/mark_notification_read', {
+        method: 'POST',
+        headers: teacherHeaders,
+        body: JSON.stringify({ p_notification_id: '00000000-0000-4000-8000-0000000000ff' }),
+      });
+      record('رفض تعليم تنبيه غير المستلم', foreign.status === 403 || foreign.status === 404, {
+        status: foreign.status,
+        code: foreign.body?.code ?? null,
+      });
+    }
   }
 
   // ٩) الإيقاف ثم منع الدخول ثم إعادة الحالة — آخر خطوة، وتبقى البيئة نظيفة بعدها
